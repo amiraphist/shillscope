@@ -5,8 +5,21 @@
 <meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>shillscope</title>
+<meta name="description" content="Paste an X shill thread and see every artwork reply as a gallery: prices, platforms, smart sort, collect list.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="shillscope · every shill in one gallery">
+<meta property="og:description" content="Paste an X shill thread and see every artwork reply as a gallery: prices, platforms, smart sort, collect list.">
+<meta property="og:url" content="https://amiraphist.github.io/shillscope/">
+<meta property="og:image" content="https://amiraphist.github.io/shillscope/og.jpg">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:creator" content="@amiraphist">
+<meta name="twitter:image" content="https://amiraphist.github.io/shillscope/og.jpg">
 <meta name="description" content="Paste a shill thread. See every piece.">
 <meta name="theme-color" content="#000000">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"%3E%3Crect width="64" height="64" rx="14" fill="%23000"/%3E%3Ccircle cx="32" cy="32" r="16.9" fill="none" stroke="%23e0242b" stroke-width="5"/%3E%3Ccircle cx="32" cy="32" r="4" fill="%23e0242b"/%3E%3C/svg%3E">
+<link rel="icon" type="image/png" sizes="48x48" href="https://amiraphist.github.io/shillscope/favicon.png">
+<link rel="apple-touch-icon" href="https://amiraphist.github.io/shillscope/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script>try{if(localStorage.getItem("ss:theme")==="light")document.documentElement.dataset.theme="light"}catch(e){}</script>
@@ -20,18 +33,19 @@
   --red-gl:linear-gradient(180deg,rgba(240,60,66,.88),rgba(200,22,30,.7) 60%,rgba(240,60,66,.75));
   --red-sh:inset 0 1px 1px rgba(255,255,255,.65),inset 0 0 14px rgba(255,255,255,.1),0 6px 22px rgba(224,36,43,.4)}
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{background:var(--bg);color:var(--fg);font-family:'Space Grotesk',system-ui,sans-serif;min-height:100%;-webkit-font-smoothing:antialiased}
+html,body{background:var(--bg);color:var(--fg);font-family:'Space Grotesk',system-ui,sans-serif,'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji';min-height:100%;-webkit-font-smoothing:antialiased}
 body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:3;opacity:.06;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 button,input,select{font:inherit;color:inherit}
 a{color:inherit;text-decoration:none}
-.mono{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.03em;color:var(--mute);text-transform:lowercase}
+.mono{font-family:'JetBrains Mono',monospace,'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji';font-size:12px;letter-spacing:.03em;color:var(--mute);text-transform:lowercase}
 
 /* background portrait */
-#bg{position:fixed;inset:0;z-index:0;background:#000;transition:opacity .8s,filter .8s;overflow:hidden}
-#bg::before{content:"";position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);height:100%;aspect-ratio:1/1;background:url(__BG__) center/cover no-repeat;
+#bg{position:fixed;inset:0;z-index:0;pointer-events:none;user-select:none;-webkit-user-select:none;background:#000;transition:opacity .8s,filter .8s;overflow:hidden}
+#bg::before,#bgv{content:"";position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);height:100%;aspect-ratio:1080/1420;background:url(__BG__) center/cover no-repeat;object-fit:cover;
   -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 22%,#000 78%,transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 22%,#000 78%,transparent 100%)}
-@media (max-aspect-ratio:1/1){ #bg::before{width:100%;aspect-ratio:auto;-webkit-mask-image:none;mask-image:none;background-position:center 30%} }
+#bgv{background:none;opacity:0;transition:opacity .6s;pointer-events:none}#bgv.on{opacity:1}
+@media (max-aspect-ratio:1/1){ #bg::before,#bgv{width:100%;aspect-ratio:auto;-webkit-mask-image:none;mask-image:none;background-position:center 30%;object-position:center 30%} }
 body:not(.loaded){overflow:hidden}
 body:not(.loaded) #gal,body:not(.loaded) #more{display:none}
 html{scrollbar-width:thin;scrollbar-color:#2a2a2a transparent}
@@ -45,7 +59,7 @@ h1{font-weight:700;font-size:clamp(48px,10vw,120px);letter-spacing:-.055em;line-
 h1 span{color:var(--acc)}
 body.loaded h1{cursor:pointer}
 .sub{margin:14px 0 28px;text-align:center;color:#aaa}
-form{display:flex;width:min(640px,100%);border:1px solid #444;background:rgba(10,10,10,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-radius:999px;padding:6px;transition:border-color .2s}
+form{cursor:text;display:flex;width:min(640px,100%);border:1px solid #444;background:rgba(10,10,10,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-radius:999px;padding:6px;transition:border-color .2s}
 form:focus-within{border-color:var(--fg)}
 form input{flex:1;background:none;border:0;outline:0;padding:14px 20px;font-size:16px;min-width:0}
 form input::placeholder{color:#666}
@@ -124,7 +138,7 @@ select{cursor:pointer}
 .tag{font-size:12px;border:1px solid #2a2a2a;border-radius:7px;padding:2px 7px;color:#cfcfcf}
 .tag.price{color:#fff;border-color:#444}
 .tag.plat{color:var(--fg);background:#1a1a1a}
-.txt{font-size:13px;line-height:1.5;color:#aaa;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
+.txt{font-size:13px;line-height:1.5;color:#aaa;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
 .stats{display:flex;gap:12px}
 .buy{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 12px;border-radius:7px;font-size:13px;font-weight:500;background:var(--fg);color:#000;transition:background .2s,color .2s}
 .buy:hover{background:var(--acc);color:#fff}
@@ -251,7 +265,7 @@ body.feeding #cl{top:max(12px,env(safe-area-inset-top));bottom:auto;padding:9px 
   .who{padding:9px 9px 8px;gap:8px}.who img{width:26px;height:26px}.who b{font-size:12.5px}
   .rank{display:none}
   .info{padding:8px 9px 10px;gap:7px}
-  .txt{font-size:12px;-webkit-line-clamp:2}
+  .txt{font-size:12px;-webkit-line-clamp:3}
   .buy{padding:8px;font-size:12px}
   .fav{opacity:1}
   #lb{grid-template-columns:1fr;grid-template-rows:auto 1fr}
@@ -397,7 +411,15 @@ body.feedmode .zoom{display:none}
 </style>
 </head>
 <body>
-<div id="bg"></div>
+<div id="bg"><video id="bgv" disablepictureinpicture disableremoteplayback muted loop playsinline preload="auto" aria-hidden="true" tabindex="-1"></video></div>
+<script>(function(){var v=document.getElementById('bgv');if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+var base=/github\.io$/.test(location.hostname)?'':'https://amiraphist.github.io/shillscope/';
+v.src=base+(Math.min(innerWidth,innerHeight)<700?'bg-m.mp4':'bg.mp4');v.muted=true;
+v.addEventListener('contextmenu',function(e){e.preventDefault()});
+v.addEventListener('playing',function(){v.classList.add('on')});
+var p=v.play();if(p&&p.catch)p.catch(function(){});})();
+document.addEventListener('DOMContentLoaded',function(){var f=document.querySelector('#hero form'),u=document.getElementById('u');if(f&&u)f.addEventListener('mousedown',function(e){if(e.target===f){e.preventDefault();u.focus();}});});
+function bgPlay(on){var v=document.getElementById('bgv');if(!v||!v.src)return;if(on){var p=v.play();if(p&&p.catch)p.catch(function(){});}else v.pause();}</script>
 <section id="hero">
   <button id="thm" aria-label="toggle light / dark"><svg class="moon" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M20.7 14.6A8.5 8.5 0 0 1 9.4 3.3a8.5 8.5 0 1 0 11.3 11.3z"/></svg><svg class="sun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2" fill="currentColor" stroke="none"/><path d="M12 2v2.2M12 19.8V22M2 12h2.2M19.8 12H22M4.9 4.9l1.6 1.6M17.5 17.5l1.6 1.6M4.9 19.1l1.6-1.6M17.5 6.5l1.6-1.6"/></svg></button>
   <h1>shill<span>scope</span></h1>
@@ -420,6 +442,7 @@ body.feedmode .zoom{display:none}
   <div class="ctl">
     <div class="sorts" id="sorts"></div>
     <div class="tune" id="tune">
+      <span class="end">sale</span>
       <div class="track" id="track"><div class="rail"><i id="tfill"></i></div><div class="stops" id="stops"></div><div class="knob" id="knob"><span id="klabel">all</span></div></div>
     </div>
   </div>
@@ -447,7 +470,7 @@ body.feedmode .zoom{display:none}
 
 <script>
 /* ================= config ================= */
-const API = '/api/replies';
+const API = (/github\.io$/.test(location.hostname) ? 'https://shillscope.amiraphist.workers.dev' : '') + '/api/replies';
 const PAGE_CAP = 25;
 const DEMO = location.protocol === 'file:' || new URLSearchParams(location.search).has('demo');
 
@@ -492,7 +515,10 @@ function enrich(x){
   // edition
   let ed=null; if (RX.oneOfOne.test(t)) ed='1/1'; else { const e=t.match(RX.edition); if(e) ed = /open|OE/i.test(e[0])?'open ed.':'ed. '+(e[1]||e[2]); }
   // links → platform
-  const links=(x.links||[]).map(u=>({url:u,p:platformOf(u)})).filter(l=>l.p);
+  const seen=new Set();
+  const links=(x.links||[]).map(u=>typeof u==='string'?{url:u,p:platformOf(u)}:u).filter(l=>{ if(!l.p) return false;
+    let k; try{ const q=new URL(l.url); k=q.hostname.replace(/^www\./,'').toLowerCase()+decodeURIComponent(q.pathname).replace(/\/+$/,'').toLowerCase(); }catch(_){ k=l.url; }
+    if(seen.has(k)) return false; seen.add(k); return true; });
   links.sort((a,b)=>(b.p.known?1:0)-(a.p.known?1:0));
   const buy = links[0]||null;
   // chain
@@ -695,6 +721,14 @@ function mainOf(m,i){ return m.video ? `<video class="main vid" muted loop plays
 const VIO = 'IntersectionObserver' in window ? new IntersectionObserver(es=>es.forEach(e=>{ const v=e.target;
   if(e.isIntersecting){ if(!v.src&&v.dataset.src) v.src=v.dataset.src; v.play().catch(()=>{}); } else if(!v.paused) v.pause(); }),{threshold:.35}) : null;
 function watchVids(root){ if(!VIO) return; root.querySelectorAll('video.vid').forEach(v=>{ if(!v._w){ v._w=1; VIO.observe(v); } }); }
+function shortTxt(x){ return (x.text||'').replace(/https?:\/\/\S+/g,'').replace(/[ \t]{2,}/g,' ').replace(/\n{2,}/g,'\n').trim(); }
+function linkLabel(l,all){
+  let seg=''; try{ const ps=new URL(l.url).pathname.split('/').filter(Boolean); seg=decodeURIComponent(ps[ps.length-1]||''); }catch(_){}
+  if(/^@/.test(seg)) return 'artist on '+(l.p.known?l.p.name:l.p.host);
+  const base=l.p.known?'collect on '+l.p.name:'open '+l.p.host;
+  if(all.filter(o=>o.p.name===l.p.name).length<2 || !seg) return base;
+  const tag=/^\d+$/.test(seg)?'#'+seg:(t=>t.length>20?t.slice(0,19).trim()+'…':t)(seg.replace(/[-_]+/g,' '));
+  return base+' · '+tag; }
 function card(x){
   const m=x.media[0];
   const el=document.createElement('article'); el.className='card'; el.dataset.id=x.id;
@@ -703,11 +737,11 @@ function card(x){
     <div class="art">
       ${m.video?`<video class="vid" muted loop playsinline preload="none" poster="${esc(m.thumb||m.url)}" data-src="${esc(m.video)}" ${m.w?`width="${m.w}" height="${m.h}"`:''}></video>`:`<img loading="lazy" src="${esc(m.thumb||m.url)}" alt="" ${m.w?`width="${m.w}" height="${m.h}"`:''}>`}
       ${x.media.length>1?`<span class="badge">1/${x.media.length}</span>`:''}${m.type==='gif'?`<span class="badge">gif</span>`:m.type&&m.type!=='photo'?`<span class="badge">▶ video</span>`:''}
-      <button class="fav ${S.favs[x.id]?'on':''}" title="${S.favs[x.id]?'remove from':'add to'} collect list">♥</button>
+      <button class="fav ${S.favs[x.id]?'on':''}" title="${S.favs[x.id]?'remove from':'add to'} collect list" aria-label="${S.favs[x.id]?'remove from':'add to'} collect list" aria-pressed="${S.favs[x.id]?'true':'false'}">♥</button>
     </div>
     <div class="info">
       ${tags?`<div class="tags">${tags}</div>`:''}
-      ${x.text?`<p class="txt">${esc(x.text)}</p>`:''}
+      ${shortTxt(x)?`<p class="txt">${esc(shortTxt(x))}</p>`:''}
       ${statsOf(x)}
       ${btnOf(x)}
     </div>`;
@@ -718,7 +752,7 @@ function card(x){
 }
 function elFor(x,i){ let el=S.els.get(x.id); if(!el){ el=card(x); el.style.animationDelay=Math.min(i,24)*22+'ms'; S.els.set(x.id,el); } return el; }
 function render(animate){
-  document.body.classList.add('loaded');
+  document.body.classList.add('loaded'); bgPlay(false);
   if(!S._k){ S._k=1; requestAnimationFrame(()=>setMode(S.mode,true)); } else if(!$('#track').classList.contains('drag')) setMode(S.mode,true);
   S.view = sorted();
   const g=$('#gal'); g.className=S.layout==='feed'?'masonry':S.layout; applyCols();
@@ -748,8 +782,8 @@ function fav(x){
   if(S.favs[x.id]) delete S.favs[x.id];
   else S.favs[x.id]={url:x.url,u:x.author.username,name:x.author.name,thumb:(x.media[0]||{}).thumb||(x.media[0]||{}).url,buy:x.buy&&x.buy.url,plat:x.platform,price:x.price&&{val:x.price.val,cur:x.price.cur,label:x.price.label},ed:x.ed,t:Date.now()};
   try{ localStorage.setItem('ss:favs',JSON.stringify(S.favs)); }catch(_){}
-  const el=S.els.get(x.id); if(el){ const b=el.querySelector('.fav'); b.classList.toggle('on',!!S.favs[x.id]); b.title=S.favs[x.id]?'remove from collect list':'add to collect list'; }
-  document.querySelectorAll(`.slide[data-id="${x.id}"] .add`).forEach(b=>b.classList.toggle('on',!!S.favs[x.id]));
+  const el=S.els.get(x.id); if(el){ const b=el.querySelector('.fav'); b.classList.toggle('on',!!S.favs[x.id]); b.title=b.ariaLabel=S.favs[x.id]?'remove from collect list':'add to collect list'; b.setAttribute('aria-pressed',S.favs[x.id]?'true':'false'); }
+  document.querySelectorAll(`.slide[data-id="${x.id}"] .add`).forEach(b=>{ b.classList.toggle('on',!!S.favs[x.id]); b.setAttribute('aria-pressed',S.favs[x.id]?'true':'false'); });
   drawChips(); drawList();
 }
 function drawList(){
@@ -788,8 +822,8 @@ function renderFeed(){
       <div class="pop">♥</div>
       <div class="meta">${whoOf(x,' · '+ago(x.created_at))}
         ${tagsOf(x)?`<div class="tags">${tagsOf(x)}</div>`:''}
-        ${x.text?`<p class="txt">${esc(x.text)}</p>`:''}
-        <div class="fbtns"><button class="add ${S.favs[x.id]?'on':''}" title="add to collect list">♥</button>${btnOf(x)}</div>
+        ${shortTxt(x)?`<p class="txt">${esc(shortTxt(x))}</p>`:''}
+        <div class="fbtns"><button class="add ${S.favs[x.id]?'on':''}" title="add to collect list" aria-label="add to collect list" aria-pressed="${S.favs[x.id]?'true':'false'}">♥</button>${btnOf(x)}</div>
       </div></section>`; }).join('');
   f.hidden=false; document.body.classList.add('feeding'); f.scrollTop=keep; watchVids(f);
   $('#fx').onclick=()=>setLayout('masonry');
@@ -822,7 +856,7 @@ function step(d){ const n=S.view.length; if(!n) return; S.i=(S.i+d+n)%n; S.m=0; 
 function draw(){
   const x=S.view[S.i]; if(!x) return close(); const m=x.media[S.m]||x.media[0];
   const lv=$('#lbv'); if(m.video){ $('#lbi').hidden=true; $('#lbi').removeAttribute('src'); lv.hidden=false; lv.poster=m.url; lv.muted=m.type==='gif'; lv.controls=m.type!=='gif'; if(lv.getAttribute('src')!==m.video) lv.src=m.video; lv.play().catch(()=>{lv.muted=true; lv.play().catch(()=>{});}); } else { lv.pause(); lv.hidden=true; lv.removeAttribute('src'); $('#lbi').hidden=false; $('#lbi').src=m.url; }
-  const links = x.links.length ? `<div class="links">${x.links.map((l,k)=>`<a class="buy ${k?'ghost':''}" href="${esc(l.url)}" target="_blank" rel="noopener">${l.p.known?'collect on '+esc(l.p.name):'open '+esc(l.p.host)} ↗</a>`).join('')}</div>` : '';
+  const links = x.links.length ? `<div class="links">${x.links.map((l,k)=>`<a class="buy ${k?'ghost':''}" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(linkLabel(l,x.links))} ↗</a>`).join('')}</div>` : '';
   $('#lba').innerHTML = `
     <a class="who" href="https://x.com/${esc(x.author.username)}" target="_blank" rel="noopener"><img src="${esc(x.author.avatar)}" alt=""><div><b>${esc(x.author.name)}${vf(x.author)}</b><span class="mono">@${esc(x.author.username)} · ${fmt(x.author.followers)} followers</span></div></a>
     ${links}
@@ -868,7 +902,7 @@ function goHome(push){
   Object.assign(S,{id:null,root:null,items:[],next:null,pages:0,view:[],q:'',plat:'',mode:0}); S.els.clear(); S.filters.clear();
   $('#gal').innerHTML=''; $('#root').innerHTML=''; $('#count').textContent=''; $('#u').value=''; $('#err').textContent='';
   $('#more').hidden=true; $('#empty').hidden=true; $('#cl').hidden=true; $('#prog').style.width='0';
-  document.body.classList.remove('loaded'); window.scrollTo(0,0);
+  document.body.classList.remove('loaded'); bgPlay(true); window.scrollTo(0,0);
   if(push!==false){ try{ history.pushState(null,'',location.pathname+(DEMO&&location.protocol!=='file:'?'?demo':'')); }catch(_){} }
   setTimeout(()=>$('#u').focus(),50);
 }
