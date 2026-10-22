@@ -6,7 +6,12 @@ const CACHE_TTL = 1800;
 export default {
   async fetch(req, env, ctx) {
     const url = new URL(req.url);
+    if (url.pathname === '/api/hit') {
+      if (req.method !== 'OPTIONS') ctx.waitUntil(bump(env, 'v', (url.searchParams.get('r') || '').slice(0, 60), req));
+      return new Response(null, { status: 204, headers: CORS });
+    }
     if (url.pathname === '/api/replies') {
+      if (req.method === 'GET' && !url.searchParams.get('next')) ctx.waitUntil(bump(env, 'g', '', req));
       if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: { ...CORS, 'access-control-allow-methods': 'GET', 'access-control-allow-headers': 'x-access-key', 'access-control-max-age': '86400' } });
       const r = await replies(req, url, env, ctx);
       const out = new Response(r.body, r); for (const [k, v] of Object.entries(CORS)) out.headers.set(k, v); return out;
@@ -15,6 +20,29 @@ export default {
       'content-security-policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https:; media-src https://video.twimg.com https://amiraphist.github.io; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; object-src 'none'" } });
   },
 };
+
+function uaInfo(ua) {
+  const os = /iPhone|iPod/.test(ua) ? 'iOS' : /iPad/.test(ua) ? 'iPadOS' : /Android/.test(ua) ? 'Android' : /Windows/.test(ua) ? 'Windows' : /Mac OS X|Macintosh/.test(ua) ? 'macOS' : /CrOS/.test(ua) ? 'ChromeOS' : /Linux/.test(ua) ? 'Linux' : 'other';
+  const dev = /iPad|Tablet/.test(ua) || (/Android/.test(ua) && !/Mobile/.test(ua)) ? 'tablet' : /Mobi|iPhone|Android/.test(ua) ? 'mobile' : 'desktop';
+  const br = /Twitter|TwitterAndroid/.test(ua) ? 'X app' : /FBAN|FBAV|Instagram/.test(ua) ? 'Meta app' : /Telegram/.test(ua) ? 'Telegram' : /Edg\//.test(ua) ? 'Edge' : /OPR\/|Opera/.test(ua) ? 'Opera' : /SamsungBrowser/.test(ua) ? 'Samsung' : /Brave/.test(ua) ? 'Brave' : /Firefox|FxiOS/.test(ua) ? 'Firefox' : /CriOS|Chrome\//.test(ua) ? 'Chrome' : /Safari/.test(ua) ? 'Safari' : 'other';
+  return { dev, os, br };
+}
+
+async function bump(env, kind, ref, req) {
+  if (!env.STATS) return;
+  try {
+    const key = 'd:' + new Date().toISOString().slice(0, 10);
+    const d = (await env.STATS.get(key, 'json')) || { v: 0, g: 0, ref: {}, c: {} };
+    d[kind] = (d[kind] || 0) + 1;
+    if (kind === 'v') {
+      const r = ref || 'direct'; d.ref[r] = (d.ref[r] || 0) + 1;
+      const c = (req.cf && req.cf.country) || '?'; d.c[c] = (d.c[c] || 0) + 1;
+      const u = uaInfo(req.headers.get('user-agent') || '');
+      for (const [f, val] of [['dev', u.dev], ['os', u.os], ['br', u.br]]) { d[f] = d[f] || {}; d[f][val] = (d[f][val] || 0) + 1; }
+    }
+    await env.STATS.put(key, JSON.stringify(d));
+  } catch (e) {}
+}
 
 const CORS = { 'access-control-allow-origin': '*', 'vary': 'origin' };
 const SEC = { 'x-content-type-options': 'nosniff', 'referrer-policy': 'no-referrer', 'x-frame-options': 'DENY', 'permissions-policy': 'camera=(), microphone=(), geolocation=()', 'strict-transport-security': 'max-age=31536000' };

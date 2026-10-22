@@ -17,7 +17,7 @@
 <meta name="twitter:image" content="https://amiraphist.github.io/shillscope/og.jpg">
 <meta name="description" content="Paste a shill thread. See every piece.">
 <meta name="theme-color" content="#000000">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"%3E%3Crect width="64" height="64" rx="14" fill="%23000"/%3E%3Ccircle cx="32" cy="32" r="16.9" fill="none" stroke="%23e0242b" stroke-width="5"/%3E%3Ccircle cx="32" cy="32" r="4" fill="%23e0242b"/%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="https://amiraphist.github.io/shillscope/favicon.svg">
 <link rel="icon" type="image/png" sizes="48x48" href="https://amiraphist.github.io/shillscope/favicon.png">
 <link rel="apple-touch-icon" href="https://amiraphist.github.io/shillscope/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -42,10 +42,11 @@ a{color:inherit;text-decoration:none}
 
 /* background portrait */
 #bg{position:fixed;inset:0;z-index:0;pointer-events:none;user-select:none;-webkit-user-select:none;background:#000;transition:opacity .8s,filter .8s;overflow:hidden}
-#bg::before,#bgv{content:"";position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);height:100%;aspect-ratio:1080/1420;background:url(__BG__) center/cover no-repeat;object-fit:cover;
+#bg::before,#bgv,#bgc{content:"";position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);height:100%;aspect-ratio:1080/1420;background:url(__BG__) center/cover no-repeat;object-fit:cover;
   -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 22%,#000 78%,transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 22%,#000 78%,transparent 100%)}
-#bgv{background:none;opacity:0;transition:opacity .6s;pointer-events:none}#bgv.on{opacity:1}
-@media (max-aspect-ratio:1/1){ #bg::before,#bgv{width:100%;aspect-ratio:auto;-webkit-mask-image:none;mask-image:none;background-position:center 30%;object-position:center 30%} }
+#bgv,#bgc{background:none;opacity:0;transition:opacity .6s;pointer-events:none}#bgv.on,#bgc.on{opacity:1}
+#bgv.ff{position:fixed;left:0;top:0;width:2px;height:2px;aspect-ratio:auto;transform:none;opacity:0!important}
+@media (max-aspect-ratio:1/1){ #bg::before,#bgv,#bgc{width:100%;aspect-ratio:auto;-webkit-mask-image:none;mask-image:none;background-position:center 30%;object-position:center 30%} }
 body:not(.loaded){overflow:hidden}
 body:not(.loaded) #gal,body:not(.loaded) #more{display:none}
 html{scrollbar-width:thin;scrollbar-color:#2a2a2a transparent}
@@ -417,6 +418,13 @@ var base=/github\.io$/.test(location.hostname)?'':'https://amiraphist.github.io/
 v.src=base+(Math.min(innerWidth,innerHeight)<700?'bg-m.mp4':'bg.mp4');v.muted=true;
 v.addEventListener('contextmenu',function(e){e.preventDefault()});
 v.addEventListener('playing',function(){v.classList.add('on')});
+if(/Firefox\//.test(navigator.userAgent)){try{var c=document.createElement('canvas'),x=c.getContext('2d');c.id='bgc';c.setAttribute('aria-hidden','true');
+v.parentNode.insertBefore(c,v);v.classList.add('ff');
+var sz=function(){var r=c.getBoundingClientRect(),d=Math.min(window.devicePixelRatio||1,2);c.width=Math.max(1,Math.round(r.width*d));c.height=Math.max(1,Math.round(r.height*d));};
+sz();addEventListener('resize',sz);
+v.addEventListener('playing',function(){c.classList.add('on')});
+var draw=function(){if(!v.paused&&v.readyState>=2&&v.videoWidth){var vw=v.videoWidth,vh=v.videoHeight,k=Math.max(c.width/vw,c.height/vh),dw=vw*k,dh=vh*k;x.drawImage(v,(c.width-dw)/2,(c.height-dh)*0.3,dw,dh);}requestAnimationFrame(draw);};
+requestAnimationFrame(draw);}catch(e){}}
 var p=v.play();if(p&&p.catch)p.catch(function(){});})();
 document.addEventListener('DOMContentLoaded',function(){var f=document.querySelector('#hero form'),u=document.getElementById('u');if(f&&u)f.addEventListener('mousedown',function(e){if(e.target===f){e.preventDefault();u.focus();}});});
 function bgPlay(on){var v=document.getElementById('bgv');if(!v||!v.src)return;if(on){var p=v.play();if(p&&p.catch)p.catch(function(){});}else v.pause();}</script>
@@ -472,6 +480,8 @@ function bgPlay(on){var v=document.getElementById('bgv');if(!v||!v.src)return;if
 /* ================= config ================= */
 const API = (/github\.io$/.test(location.hostname) ? 'https://shillscope.amiraphist.workers.dev' : '') + '/api/replies';
 const PAGE_CAP = 25;
+if (!DEMO_EARLY()) try { let r=''; try { r=new URL(document.referrer).hostname } catch(e) {} navigator.sendBeacon(API.replace('/api/replies','/api/hit')+'?r='+encodeURIComponent(r)+'&p='+(/github\.io$/.test(location.hostname)?'gh':'wk')); } catch (e) {}
+function DEMO_EARLY(){ return location.protocol === 'file:' || new URLSearchParams(location.search).has('demo'); }
 const DEMO = location.protocol === 'file:' || new URLSearchParams(location.search).has('demo');
 
 /* ================= marketplaces ================= */
