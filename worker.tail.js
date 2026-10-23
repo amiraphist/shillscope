@@ -4,6 +4,7 @@ const X = 'https://api.x.com/2';
 const CACHE_TTL = 1800;
 
 export default {
+  async scheduled(ev, env, ctx) { ctx.waitUntil(scan(env, ctx)); },
   async fetch(req, env, ctx) {
     const url = new URL(req.url);
     if (url.pathname === '/api/hit') {
@@ -11,10 +12,16 @@ export default {
       return new Response(null, { status: 204, headers: CORS });
     }
     if (url.pathname === '/stats') return stats(url, env);
+    if (url.pathname === '/api/hot') return hotRoute(env);
+    if (url.pathname === '/api/px') return pxRoute(ctx);
+    if (url.pathname === '/api/more') { const id = url.searchParams.get('id') || ''; if (!/^\d{5,25}$/.test(id) || !env.APIFY_TOKEN) return new Response('{"done":true,"items":[]}', { headers: JH });
+      let o; try { o = await apMore(env, id); } catch (e) { o = { pending: true }; } return new Response(JSON.stringify(o), { headers: { ...JH, 'cache-control': 'no-store' } }); }
     if (url.pathname === '/api/replies') {
       if (req.method === 'GET' && !url.searchParams.get('next')) ctx.waitUntil(bump(env, 'g', '', req));
       if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: { ...CORS, 'access-control-allow-methods': 'GET', 'access-control-allow-headers': 'x-access-key', 'access-control-max-age': '86400' } });
-      const r = await replies(req, url, env, ctx);
+      let r = await replies(req, url, env, ctx);
+      const id = url.searchParams.get('id') || '';
+      if (r.ok && req.method === 'GET' && /^\d{5,25}$/.test(id) && !url.searchParams.get('next')) r = await enrich(r, id, env, ctx);
       const out = new Response(r.body, r); for (const [k, v] of Object.entries(CORS)) out.headers.set(k, v); return out;
     }
     return new Response(HTML, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'public, max-age=300', ...SEC,
@@ -336,3 +343,87 @@ ${postBlock}
   return new Response(html, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', ...SEC, 'x-robots-tag': 'noindex',
     'content-security-policy': "default-src 'none'; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src https://amiraphist.github.io; frame-ancestors 'none'; base-uri 'none'" } });
 }
+
+
+/* ---------- live prices, hot shill threads, Apify extra replies ---------- */
+const JH={"content-type":"application/json",...SEC,...CORS};
+const ok=x=>x&&isFinite(x.p)&&x.p>0;
+async function cb(pair){try{const r=await fetch("https://api.exchange.coinbase.com/products/"+pair+"-USD/stats",{headers:{"User-Agent":"shillscope"}});if(!r.ok)return null;const j=await r.json();const l=parseFloat(j.last),o=parseFloat(j.open);return{p:l,c:o?(l-o)/o*100:0};}catch(e){return null}}
+async function kr(pair){try{const r=await fetch("https://api.kraken.com/0/public/Ticker?pair="+pair+"USD");const j=await r.json();const t=Object.values(j.result||{})[0];if(!t)return null;const l=parseFloat(t.c[0]),o=parseFloat(t.o);return{p:l,c:o?(l-o)/o*100:0};}catch(e){return null}}
+async function px(s,k){let v=await cb(s);if(!ok(v))v=await kr(k);return ok(v)?v:null;}
+
+const DAY=24*36e5,HSK="lab:hs";
+const sf=id=>{try{return Number(BigInt(id)>>22n)+1288834974657}catch(e){return 0}};   // tweet id -> ms
+async function hs(env){try{return JSON.parse(await env.STATS.get(HSK)||"{}")}catch(e){return{}}}
+const FXH={headers:{"User-Agent":"shillscope/1.0 (+https://shillscope.amiraphist.workers.dev)"}};
+/* hot-thread discovery: artists who reply to shill threads lead to today's shill threads (snowball). Runs every 10 min in small steps (free-plan limits). */
+const SHILL_Y=/\b(drop|share|show|post|leave|send|shill|link)\b[^.!?\n]{0,40}\b(art|arts|work|works|piece|pieces|nfts?|1\/1s?|editions?|links?|best|favou?rite|stuff|creations?)\b|\bbuying\b|\bcollecting\b|\blooking (for|to (buy|collect))\b|\bbudget\b|\bshill (me|thread)\b|\bshow me\b|\bwhat are you (selling|minting)\b|\bart tonight\b|\bin the market\b|\bfloor sweep|\bsweep(ing)?\b|👇|⬇️/i;
+const SHILL_N=/\bnot (buying|collecting)\b|\bdo ?n[o']t (drop|post|shill)\b|\bno shill|\bapolog|\bunfollow|\bminting now\b|\bnow part of\b|\bmint (is )?live\b|\bjust (minted|dropped)\b|\bmy (new )?(drop|piece|work)\b|\bgiveaway\b/i;
+function isShill(t){t=(t||"").replace(/https?:\/\/\S+/g,"");return SHILL_Y.test(t)&&!SHILL_N.test(t);}
+let SCTX={waitUntil(){}};
+async function scan(env,ctx){if(ctx)SCTX=ctx;const S=await hs(env);const now=Date.now();
+ S.seeds=S.seeds||[];S.cand=S.cand||{};S.done=S.done||{};S.list=S.list||[];S.cur=S.cur||0;
+ const n=S.seeds.length;const pick=[];for(let i=0;i<Math.min(6,n);i++)pick.push(S.seeds[(S.cur+i)%n]);S.cur=n?(S.cur+6)%n:0;
+ await Promise.all(pick.map(async seed=>{try{const r=await fetch("https://api.fxtwitter.com/2/profile/"+seed+"/statuses?with_replies=true",FXH);if(!r.ok)return;const j=await r.json();
+  for(const s of j.results||[]){const rt=s.replying_to;if(!rt||!rt.status||!s.author||s.author.screen_name.toLowerCase()!==seed.toLowerCase())continue;
+   if((rt.screen_name||"").toLowerCase()===seed.toLowerCase())continue;if(now-sf(rt.status)>DAY)continue;
+   const c=S.cand[rt.status]||(S.cand[rt.status]={n:0,u:rt.screen_name,by:[]});if(!c.by.includes(seed)){c.by.push(seed);c.n++;}}}catch(e){}}));
+ const todo=Object.entries(S.cand).filter(([id,c])=>c.n>=2&&!S.done[id]).sort((a,b)=>b[1].n-a[1].n).slice(0,3);
+ await Promise.all(todo.map(async([id,c])=>{S.done[id]=now;try{const r=await fxReplies(id,SCTX,env);if(!r.ok)return;const j=await r.json();const it=j.items||[];if(it.length<8||!j.root)return;if(!isShill(j.root.text))return;
+  S.list=S.list.filter(v=>v.id!==id);S.list.push({id,u:j.root.author&&j.root.author.username||c.u,t:(j.root.text||"").replace(/https?:\/\/\S+/g,"").trim().slice(0,90),f:(j.root.text||"").slice(0,400),av:j.root.author&&j.root.author.avatar||"",c:it.length});
+  const ns=it.map(x=>x.author&&x.author.username).filter(Boolean);for(const a of ns)if(!S.seeds.includes(a))S.seeds.push(a);}catch(e){}}));
+ if(S.seeds.length>300)S.seeds=S.seeds.slice(-300);
+ for(const id in S.cand)if(now-sf(id)>DAY)delete S.cand[id];{const ks=Object.keys(S.cand);if(ks.length>500)ks.sort((a,b)=>S.cand[a].n-S.cand[b].n||sf(a)-sf(b)).slice(0,ks.length-500).forEach(k=>delete S.cand[k]);}for(const id in S.done)if(now-S.done[id]>36*36e5)delete S.done[id];
+ S.list=S.list.filter(v=>now-sf(v.id)<DAY&&isShill(v.f||v.t)).sort((a,b)=>b.c-a.c).slice(0,30);S.t=now;
+ await env.STATS.put(HSK,JSON.stringify(S));}
+
+/* ---------- Apify extra replies (lab) ---------- */
+const AP_ACT="xquik~x-reply-scraper",AP_CAP=8,AP_MIN=25;
+const apDay=()=>"ap:n:"+new Date().toISOString().slice(0,10);
+function apSized(s,n){try{const u=new URL(s);if(u.hostname==="pbs.twimg.com"&&u.pathname.startsWith("/media/")){const e=(u.pathname.match(/\.(\w+)$/)||[])[1]||"jpg";u.pathname=u.pathname.replace(/\.\w+$/,"");u.search="?format="+e+"&name="+n;}return u.toString();}catch(e){return s||"";}}
+function apItem(t){const media=(t.media||[]).map(m=>{const src=m.mediaUrl||m.media_url_https;if(!src)return null;let video;if(m.type!=="photo"){const mp4=(m.videoVariants||[]).filter(v=>v.contentType==="video/mp4"&&/^https:\/\/video\.twimg\.com\//.test(v.url||"")).sort((a,b)=>(b.bitrate||0)-(a.bitrate||0));const p=mp4.find(v=>(v.bitrate||0)<=2200000)||mp4[mp4.length-1];video=p&&p.url;}
+  return{type:m.type==="photo"?"photo":(m.type==="animated_gif"?"gif":"video"),w:m.width,h:m.height,url:apSized(src,"large"),thumb:apSized(src,"small"),video};}).filter(Boolean);
+ let text=t.text||"";const links=[];for(const e of (t.entities&&t.entities.urls)||[]){if(!e.url)continue;const x=e.expanded_url||"";let h="";try{h=new URL(x).hostname.replace(/^www\./,"");}catch(_){}
+  if(!h||/(^|\.)(x|twitter)\.com$|^t\.co$|^pic\./.test(h)){text=text.split(e.url).join("");continue;}text=text.split(e.url).join(x);if(!links.includes(x))links.push(x);}
+ for(const m of t.media||[])if(m.url)text=text.split(m.url).join("");
+ const vt=(t.authorVerifiedType||"").toLowerCase(),ver=!!(t.authorIsBlueVerified||t.authorIsVerified||t.authorVerified);
+ return{id:t.id,url:t.url||("https://x.com/"+(t.authorUsername||"i")+"/status/"+t.id),text:text.replace(/^(@\w+\s*)+/,"").replace(/[ \t]+\n/g,"\n").trim(),links,created_at:t.createdAt,
+  likes:t.likeCount||0,reposts:t.retweetCount||0,replies:t.replyCount||0,quotes:t.quoteCount||0,bookmarks:t.bookmarkCount||0,
+  author:{username:t.authorUsername||"",name:t.authorName||"",avatar:(t.authorProfilePicture||"").replace("_normal.","_200x200."),followers:t.authorFollowers||0,verified:ver,vtype:!ver?"none":vt==="government"?"government":(vt==="business"||vt==="organization")?"business":"blue"},media};}
+async function apStart(env,id){const k="apr:"+id;if(await env.STATS.get(k))return true;const dk=apDay();const n=+(await env.STATS.get(dk)||0);if(n>=AP_CAP)return false;
+ const r=await fetch("https://api.apify.com/v2/acts/"+AP_ACT+"/runs?timeout=240&memory=512",{method:"POST",headers:{authorization:"Bearer "+env.APIFY_TOKEN,"content-type":"application/json"},body:JSON.stringify({tweetIds:[id],maxItems:400,scope:"direct",hasMediaOnly:true,includeHiddenReplies:false,outputPreset:"flat"})});
+ if(!r.ok)return false;const j=await r.json();const run=j.data&&j.data.id;if(!run)return false;
+ await env.STATS.put(k,JSON.stringify({run,ds:j.data.defaultDatasetId,t:Date.now()}),{expirationTtl:6*3600});await env.STATS.put(dk,String(n+1),{expirationTtl:3*86400});return true;}
+async function apMore(env,id){const got=await env.STATS.get("ap:"+id);if(got)return{done:true,items:JSON.parse(got)};
+ const s=JSON.parse(await env.STATS.get("apr:"+id)||"null");if(!s)return{done:true,items:[]};
+ const r=await fetch("https://api.apify.com/v2/actor-runs/"+s.run,{headers:{authorization:"Bearer "+env.APIFY_TOKEN}});if(!r.ok)return{pending:true};const st=(await r.json()).data.status;
+ if(st==="READY"||st==="RUNNING")return{pending:true};
+ if(st!=="SUCCEEDED"&&st!=="TIMED-OUT")return{done:true,items:[]};
+ const d=await fetch("https://api.apify.com/v2/datasets/"+s.ds+"/items?clean=true&limit=1000",{headers:{authorization:"Bearer "+env.APIFY_TOKEN}});if(!d.ok)return{pending:true};
+ const raw=await d.json();const items=(raw||[]).filter(t=>t&&t.id&&t.id!==id&&!t.isOriginalPost).map(apItem).filter(x=>x.media.length);
+ await env.STATS.put("ap:"+id,JSON.stringify(items),{expirationTtl:86400});return{done:true,items};}
+const HOTK="hot";
+async function hot(env){try{return JSON.parse(await env.STATS.get(HOTK)||"{}")}catch(e){return{}}}
+
+async function enrich(r, id, env, ctx) {
+  const body = await r.text(); let j; try { j = JSON.parse(body); } catch (e) { return new Response(body, r); }
+  if (j.root && (j.items || []).length) ctx.waitUntil((async () => { try { const m = await hot(env); const now = Date.now();
+    for (const k in m) if (now - m[k].last > 72 * 36e5) delete m[k];
+    const e = m[id] || { n: 0 }; e.n++; e.last = now; e.u = j.root.author && j.root.author.username || ''; e.t = (j.root.text || '').replace(/https?:\/\/\S+/g, '').trim().slice(0, 90); e.av = j.root.author && j.root.author.avatar || ''; e.c = (j.items || []).length; m[id] = e;
+    const top = Object.entries(m).sort((a, b) => b[1].last - a[1].last).slice(0, 40); await env.STATS.put(HOTK, JSON.stringify(Object.fromEntries(top))); } catch (e) {} })());
+  if (env.APIFY_TOKEN && j.items) { try { const host = j.root && j.root.author && j.root.author.username;
+    const got = await env.STATS.get('ap:' + id);
+    if (got) { const seen = new Set(j.items.map(x => x.id)); for (const x of JSON.parse(got)) if (!seen.has(x.id) && x.author.username !== host) { seen.add(x.id); j.items.push(x); } j.full = true; }
+    else if (j.items.length >= AP_MIN) { if (await apStart(env, id)) j.more = 'pending'; } } catch (e) {} }
+  const h = new Headers(r.headers); h.set('cache-control', 'no-store');
+  return new Response(JSON.stringify(j), { status: r.status, headers: h });
+}
+async function hotRoute(env) { const S = await hs(env); const now = Date.now(); const m = await hot(env);
+  const seen = new Set(), au = new Set(), items = [];
+  for (const v of (S.list || []).filter(v => now - sf(v.id) < DAY && isShill(v.f || v.t)).sort((a, b) => b.c - a.c)) { const a = (v.u || '').toLowerCase(); if (seen.has(v.id) || au.has(a)) continue; seen.add(v.id); au.add(a); const { f, ...o } = v; items.push(o); }
+  for (const [id, v] of Object.entries(m)) { const a = (v.u || '').toLowerCase(); if (seen.has(id) || au.has(a) || now - sf(id) > DAY || !isShill(v.t)) continue; seen.add(id); au.add(a); items.push({ id, ...v }); }
+  return new Response(JSON.stringify({ items: items.slice(0, 12), t: S.t || 0 }), { headers: { ...JH, 'cache-control': 'public, max-age=120' } }); }
+async function pxRoute(ctx) { const key = new Request('https://px.cache/v3'); const c = caches.default; const hit = await c.match(key); if (hit) return hit;
+  const [eth, xtz, btc] = await Promise.all([px('ETH', 'ETH'), px('XTZ', 'XTZ'), px('BTC', 'XBT')]);
+  const res = new Response(JSON.stringify({ eth, xtz, btc, t: Date.now() }), { headers: { ...JH, 'cache-control': (eth && xtz) ? 'public, max-age=60' : 'no-store' } });
+  if (eth && xtz) ctx.waitUntil(c.put(key, res.clone())); return res; }
