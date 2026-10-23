@@ -763,7 +763,7 @@ $('#zoom').onclick=e=>{ const b=e.target.closest('button'); if(!b||b.disabled) r
 window.addEventListener('resize',applyCols);
 
 /* ================= sorts ================= */
-const MAIN_SORTS = ['smart','rising','collect','cheap','new'];
+const MAIN_SORTS = ['cheap','pricey','gems','shuffle'];   // only these 4 (user, 2026-10-23); default order stays smart
 const SORTS = [
   ['smart','✦ smart'],['rising','rising now'],['gems','hidden gems'],['collect','ready to collect'],
   ['oneofone','1/1 first'],['cheap','lowest price'],['pricey','highest price'],['likes','most liked'],['reposts','most reposted'],
@@ -784,8 +784,7 @@ S.mode=0;
 function drawSorts(){
   const lab=k=>(SORTS.find(x=>x[0]===k)||[0,k])[1];
   const inMore=!MAIN_SORTS.includes(S.sort);
-  $('#sorts').innerHTML = MAIN_SORTS.map(k=>`<button data-s="${k}" class="${S.sort===k?'on':''}">${lab(k)}</button>`).join('') +
-    `<span class="morewrap"><button id="morebtn" class="${inMore?'on':''}">${inMore?esc(lab(S.sort)):'more'} ▾</button></span>`;
+  $('#sorts').innerHTML = MAIN_SORTS.map(k=>`<button data-s="${k}" class="${S.sort===k?'on':''}">${lab(k)}</button>`).join('');
   $('#morepop').innerHTML = SORTS.filter(([k])=>!MAIN_SORTS.includes(k)).map(([k,l])=>`<button data-s="${k}" class="${S.sort===k?'on':''}">${l}</button>`).join('');
 }
 function pickSort(k){ S.sort=k; if(k==='shuffle') S.items.forEach(x=>x._r=Math.random());

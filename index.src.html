@@ -449,6 +449,14 @@ body.loaded #hot{display:none}
 #slab .px .c{font-size:9px;color:#2ecc71;text-transform:none}
 #slab .px .c.dn{color:#e0242b}
 body.loaded #slab{display:none}
+/* light theme fixes for HUD bg, prices, dots */
+[data-theme=light] #bg{background:var(--bg)}
+[data-theme=light] #bg::after{background:none}
+[data-theme=light] #hot .hl .dot,[data-theme=light] #slab .dot{background:#141414;box-shadow:0 0 6px rgba(0,0,0,.35)}
+[data-theme=light] #slab .px{color:#141414}
+[data-theme=light] #slab .px b{color:rgba(0,0,0,.5)}
+[data-theme=light] #slab .px .c{color:#1e9e55}
+[data-theme=light] #slab .px .c.dn{color:#c81e25}
 </style>
 </head>
 <body>
@@ -459,14 +467,17 @@ body.loaded #slab{display:none}
 var K=1,RED='224,36,43',TAGS=['eth','tez','shill','drop','1/1','edition','NFT','mint','list','art','artist','collector','bid','collect','sold','gm'];
 function sz(){D=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;c.width=W*D;c.height=H*D;c.style.width=W+'px';c.style.height=H+'px';x.setTransform(D,0,0,D,0,0);K=W>=900?1.7:1;}
 sz();addEventListener('resize',sz);
-function add(px,py,auto){var z=Math.random()*.85+.15;N.push({x:px+(Math.random()-.5)*30,y:py+(Math.random()-.5)*30,z:z,b:.55+z*.45,born:performance.now(),life:(auto?2600:3400)+z*2400,
- l:Math.random()<.55?TAGS[Math.random()*TAGS.length|0]:'',vx:(Math.random()-.5)*.08,vy:(Math.random()-.5)*.08});if(N.length>70)N.shift();}
-function mv(px,py){mx=px/W-.5;my=py/H-.5;idle=performance.now();if(!last||Math.hypot(px-last[0],py-last[1])>46*K){add(px,py);last=[px,py];}}
+function add(px,py,auto){var z=Math.random()*.85+.15,nx=px+(Math.random()-.5)*30,ny=py+(Math.random()-.5)*30,M=75*K;   // hard minimum gap so boxes never overlap
+ for(var j=0;j<N.length;j++)if(Math.hypot(N[j].x-nx,N[j].y-ny)<M)return 0;
+ N.push({x:nx,y:ny,z:z,b:.55+z*.45,born:performance.now(),life:(auto?2600:3400)+z*2400,
+ l:Math.random()<.55?TAGS[Math.random()*TAGS.length|0]:'',vx:(Math.random()-.5)*.08,vy:(Math.random()-.5)*.08});if(N.length>70)N.shift();return 1;}
+function mv(px,py){mx=px/W-.5;my=py/H-.5;idle=performance.now();if(!last||Math.hypot(px-last[0],py-last[1])>60*K){if(add(px,py))last=[px,py];}}
 addEventListener('pointermove',function(e){mv(e.clientX,e.clientY)},{passive:true});
 addEventListener('touchmove',function(e){var t=e.touches[0];if(t)mv(t.clientX,t.clientY)},{passive:true});
 var red=matchMedia('(prefers-reduced-motion: reduce)').matches,ap=0;
+var XS=['#hot','#slab','footer'];
 function frame(now){x.clearRect(0,0,W,H);
- if(!red&&now-idle>2500&&now-ap>320){ap=now;var k=(now-t0)/1000;add(W*(.5+.38*Math.sin(k*.31)*Math.cos(k*.13)),H*(.42+.3*Math.sin(k*.23+1)),1);}   // autopilot when nobody moves
+ if(!red&&now-idle>2500&&now-ap>560){ap=now;var k=(now-t0)/1000;add(W*(.5+.38*Math.sin(k*.31)*Math.cos(k*.13)),H*(.42+.3*Math.sin(k*.23+1)),1);}   // autopilot when nobody moves
  var L=[];for(var i=0;i<N.length;i++){var n=N[i],a=(now-n.born)/n.life;if(a>=1)continue;n.x+=n.vx;n.y+=n.vy;
   var f=a<.12?a/.12:1-Math.pow((a-.12)/.88,2),px=n.x-mx*40*n.z,py=n.y-my*40*n.z;L.push({n:n,f:f,x:px,y:py});}
  N=N.filter(function(n){return now-n.born<n.life});
@@ -479,7 +490,9 @@ function frame(now){x.clearRect(0,0,W,H);
   x.strokeStyle='rgba('+RED+','+al+')';x.lineWidth=n.z>.6?1.2:.8;x.strokeRect(P.x-s/2,P.y-s/2,s,s);
   x.fillStyle='rgba('+RED+','+al+')';x.fillRect(P.x-1,P.y-1,2,2);
   if(n.l&&n.z>.35){x.fillText(n.l,P.x+s/2+3*K,P.y-s/2+9*K);}}
- requestAnimationFrame(frame);}
+ x.save();x.globalCompositeOperation='destination-out';x.fillStyle='#000';x.shadowColor='#000';x.shadowBlur=28*D;x.shadowOffsetX=1e4*D;   // soft fade-out over the text under the paste box
+ XS.forEach(function(q){var e=document.querySelector(q);if(!e)return;var b=e.getBoundingClientRect();if(b.width&&b.height&&b.bottom>0&&b.top<H)x.fillRect(b.left-6-1e4,b.top-4,b.width+12,b.height+8);});
+ x.restore();requestAnimationFrame(frame);}
 requestAnimationFrame(frame);})();</script>
 <script>
 document.addEventListener('DOMContentLoaded',function(){var f=document.querySelector('#hero form'),u=document.getElementById('u');if(f&&u)f.addEventListener('mousedown',function(e){if(e.target===f){e.preventDefault();u.focus();}});});
@@ -750,7 +763,7 @@ $('#zoom').onclick=e=>{ const b=e.target.closest('button'); if(!b||b.disabled) r
 window.addEventListener('resize',applyCols);
 
 /* ================= sorts ================= */
-const MAIN_SORTS = ['smart','rising','collect','cheap','new'];
+const MAIN_SORTS = ['cheap','pricey','gems','shuffle'];   // only these 4 (user, 2026-10-23); default order stays smart
 const SORTS = [
   ['smart','✦ smart'],['rising','rising now'],['gems','hidden gems'],['collect','ready to collect'],
   ['oneofone','1/1 first'],['cheap','lowest price'],['pricey','highest price'],['likes','most liked'],['reposts','most reposted'],
@@ -771,8 +784,7 @@ S.mode=0;
 function drawSorts(){
   const lab=k=>(SORTS.find(x=>x[0]===k)||[0,k])[1];
   const inMore=!MAIN_SORTS.includes(S.sort);
-  $('#sorts').innerHTML = MAIN_SORTS.map(k=>`<button data-s="${k}" class="${S.sort===k?'on':''}">${lab(k)}</button>`).join('') +
-    `<span class="morewrap"><button id="morebtn" class="${inMore?'on':''}">${inMore?esc(lab(S.sort)):'more'} ▾</button></span>`;
+  $('#sorts').innerHTML = MAIN_SORTS.map(k=>`<button data-s="${k}" class="${S.sort===k?'on':''}">${lab(k)}</button>`).join('');
   $('#morepop').innerHTML = SORTS.filter(([k])=>!MAIN_SORTS.includes(k)).map(([k,l])=>`<button data-s="${k}" class="${S.sort===k?'on':''}">${l}</button>`).join('');
 }
 function pickSort(k){ S.sort=k; if(k==='shuffle') S.items.forEach(x=>x._r=Math.random());
