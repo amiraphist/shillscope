@@ -536,7 +536,10 @@ load();setInterval(function(){if(!document.hidden)load()},60000);});</script>
     <div class="zoom" id="zoom"><button data-z="-1" aria-label="smaller cards" title="smaller cards"><svg viewBox="0 0 16 16"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg></button><button data-z="1" aria-label="bigger cards" title="bigger cards"><svg viewBox="0 0 16 16"><rect x="1.5" y="1.5" width="13" height="13" rx="3"/></svg></button></div>
   </div>
   <div class="ctl">
-    <div class="sorts" id="sorts"></div>
+    <div class="tune" id="stune">
+      <span class="end">sort</span>
+      <div class="track" id="strack" style="--kw:112px"><div class="rail"><i id="sfill"></i></div><div class="stops" id="sstops"></div><div class="knob" id="sknob"><span id="sklabel">shuffle</span></div></div>
+    </div>
     <div class="tune" id="tune">
       <span class="end">sale</span>
       <div class="track" id="track"><div class="rail"><i id="tfill"></i></div><div class="stops" id="stops"></div><div class="knob" id="knob"><span id="klabel">all</span></div></div>
@@ -661,7 +664,7 @@ function score(items){
 }
 
 /* ================= state ================= */
-const S = { id:null, root:null, items:[], next:null, loading:false, pages:0, sort:'smart', t:0, layout:'masonry', q:'', plat:'', filters:new Set(),
+const S = { id:null, root:null, items:[], next:null, loading:false, pages:0, sort:'shuffle', t:0, layout:'masonry', q:'', plat:'', filters:new Set(),
   favs: JSON.parse(localStorage.getItem('ss:favs')||'{}'), view:[], i:0, m:0, els:new Map() };
 const $ = s => document.querySelector(s);
 const fmt = n => n>=1e6?(n/1e6).toFixed(1).replace(/\.0$/,'')+'m':n>=1e3?(n/1e3).toFixed(1).replace(/\.0$/,'')+'k':String(n||0);
@@ -763,7 +766,7 @@ $('#zoom').onclick=e=>{ const b=e.target.closest('button'); if(!b||b.disabled) r
 window.addEventListener('resize',applyCols);
 
 /* ================= sorts ================= */
-const MAIN_SORTS = ['cheap','pricey','gems','shuffle'];   // only these 4 (user, 2026-10-23); default order stays smart
+const MAIN_SORTS = ['shuffle','cheap','pricey','gems'];   // only these 4 (user, 2026-10-23); default order stays smart
 const SORTS = [
   ['smart','✦ smart'],['rising','rising now'],['gems','hidden gems'],['collect','ready to collect'],
   ['oneofone','1/1 first'],['cheap','lowest price'],['pricey','highest price'],['likes','most liked'],['reposts','most reposted'],
@@ -781,21 +784,27 @@ const BY = {
   big:(a,b)=>b.author.followers-a.author.followers, small:(a,b)=>(a.author.followers-b.author.followers)||(b._smart-a._smart) };
 const MODES=[{k:'all',l:'all',f:()=>true},{k:'auc',l:'auction',f:x=>x.sale==='auction'},{k:'bn',l:'buy now',f:x=>x.sale==='buy now'},{k:'ed',l:'edition',f:x=>!!x.ed&&x.ed!=='1/1'}];
 S.mode=0;
-function drawSorts(){
-  const lab=k=>(SORTS.find(x=>x[0]===k)||[0,k])[1];
-  const inMore=!MAIN_SORTS.includes(S.sort);
-  $('#sorts').innerHTML = MAIN_SORTS.map(k=>`<button data-s="${k}" class="${S.sort===k?'on':''}">${lab(k)}</button>`).join('');
-  $('#morepop').innerHTML = SORTS.filter(([k])=>!MAIN_SORTS.includes(k)).map(([k,l])=>`<button data-s="${k}" class="${S.sort===k?'on':''}">${l}</button>`).join('');
-}
+function drawSorts(){ placeSort(); }
+function sortIdx(){ return Math.max(0,MAIN_SORTS.indexOf(S.sort)); }
+function sKnobX(u){ const tr=$('#strack'), W=tr.clientWidth||300, kw=$('#sknob').offsetWidth||112; return kw/2+(W-kw)*u; }
+function sortLabel(i){ return (SORTS.find(x=>x[0]===MAIN_SORTS[i])||[0,''])[1]; }
+function placeSort(u){ const i=sortIdx(); if(u==null) u=i/(MAIN_SORTS.length-1); const x=sKnobX(u);
+  $('#sknob').style.left=x+'px'; $('#sfill').style.left='0px'; $('#sfill').style.width=x+'px'; $('#sklabel').textContent=sortLabel(i);
+  $('#sstops').innerHTML=MAIN_SORTS.map((k,n)=>`<i style="left:${sKnobX(n/(MAIN_SORTS.length-1))}px"></i>`).join(''); }
 function pickSort(k){ S.sort=k; if(k==='shuffle') S.items.forEach(x=>x._r=Math.random());
-  $('#morepop').classList.remove('open'); drawSorts(); render(true);
+  placeSort(); render(true);
   if(S.layout!=='feed') window.scrollTo({top:Math.min(window.scrollY,$('#gal').offsetTop-140),behavior:'smooth'}); }
-$('#sorts').onclick=e=>{ const b=e.target.closest('button'); if(!b) return;
-  if(b.id==='morebtn'){ const p=$('#morepop'), r=b.getBoundingClientRect(); p.style.left=Math.min(r.left, innerWidth-216)+'px'; p.style.top=(r.bottom+8)+'px'; p.classList.toggle('open'); e.stopPropagation(); return; }
-  pickSort(b.dataset.s); };
-$('#morepop').onclick=e=>{ const b=e.target.closest('button'); if(b){ e.stopPropagation(); pickSort(b.dataset.s); } };
-document.addEventListener('click',e=>{ if(!e.target.closest('#morepop')) $('#morepop').classList.remove('open'); });
-window.addEventListener('scroll',()=>$('#morepop').classList.remove('open'),{passive:true});
+window.addEventListener('resize',()=>placeSort());
+(function(){ const tr=$('#strack'); let drag=false, moved=false, start=0, lx=0, lt=0, decay=0;
+  const jelly=e=>{ const now=performance.now(), v=Math.abs(e.clientX-lx)/Math.max(8,now-lt); lx=e.clientX; lt=now; const k=$('#sknob'); k.style.setProperty('--sx',Math.min(1.35,1+v*0.18).toFixed(3)); clearTimeout(decay); decay=setTimeout(()=>k.style.setProperty('--sx',1),90); };
+  const at=e=>{ const r=tr.getBoundingClientRect(), kw=$('#sknob').offsetWidth||112; return Math.max(0,Math.min(1,(e.clientX-r.left-kw/2)/Math.max(1,r.width-kw))); };
+  const near=u=>Math.round(u*(MAIN_SORTS.length-1));
+  const upd=e=>{ const u=at(e), k=MAIN_SORTS[near(u)]; if(k!==S.sort){ S.sort=k; if(k==='shuffle') S.items.forEach(x=>x._r=Math.random()); render(true); } placeSort(u); };
+  tr.addEventListener('pointerdown',e=>{ lx=start=e.clientX; lt=performance.now(); drag=true; moved=false; tr.classList.add('drag'); tr.setPointerCapture(e.pointerId);
+    const k=MAIN_SORTS[near(at(e))]; if(k==='shuffle'&&S.sort==='shuffle') pickSort('shuffle'); else upd(e); });
+  tr.addEventListener('pointermove',e=>{ if(drag){ if(Math.abs(e.clientX-start)>4) moved=true; jelly(e); upd(e); } });
+  const end=()=>{ if(!drag) return; drag=false; tr.classList.remove('drag'); placeSort(); }; tr.addEventListener('pointerup',end); tr.addEventListener('pointercancel',end);
+})();
 function modeCount(i){ return S.items.filter(MODES[i].f).length; }
 function knobX(u){ const tr=$('#track'), W=tr.clientWidth||300, kw=$('#knob').offsetWidth||86; return kw/2+(W-kw)*u; }
 function placeKnob(u,label){ const x=knobX(u); $('#knob').style.left=x+'px'; const f=$('#tfill'); f.style.left='0px'; f.style.width=x+'px'; if(label!=null) $('#klabel').textContent=label; }
@@ -873,7 +882,7 @@ window.pxRefresh=()=>{ S.els.clear(); render(); };
 function elFor(x,i){ let el=S.els.get(x.id); if(!el){ el=card(x); el.style.animationDelay=Math.min(i,24)*22+'ms'; S.els.set(x.id,el); } return el; }
 function render(animate){
   document.body.classList.add('loaded'); bgPlay(false);
-  if(!S._k){ S._k=1; requestAnimationFrame(()=>setMode(S.mode,true)); } else if(!$('#track').classList.contains('drag')) setMode(S.mode,true);
+  if(!S._k){ S._k=1; requestAnimationFrame(()=>{ setMode(S.mode,true); placeSort(); }); } else { if(!$('#track').classList.contains('drag')) setMode(S.mode,true); if(!$('#strack').classList.contains('drag')) placeSort(); }
   S.view = sorted();
   const g=$('#gal'); g.className=S.layout==='feed'?'masonry':S.layout; applyCols();
   const flip = animate && S.view.length<400;
