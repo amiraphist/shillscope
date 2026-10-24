@@ -360,6 +360,21 @@ const FXH={headers:{"User-Agent":"shillscope/1.0 (+https://shillscope.amiraphist
 const SHILL_Y=/\b(drop|share|show|post|leave|send|shill|link)\b[^.!?\n]{0,40}\b(art|arts|work|works|piece|pieces|nfts?|1\/1s?|editions?|links?|best|favou?rite|stuff|creations?)\b|\bbuying\b|\bcollecting\b|\blooking (for|to (buy|collect))\b|\bbudget\b|\bshill (me|thread)\b|\bshow me\b|\bwhat are you (selling|minting)\b|\bart tonight\b|\bin the market\b|\bfloor sweep|\bsweep(ing)?\b|👇|⬇️/i;
 const SHILL_N=/\bnot (buying|collecting)\b|\bdo ?n[o']t (drop|post|shill)\b|\bno shill|\bapolog|\bunfollow|\bminting now\b|\bnow part of\b|\bmint (is )?live\b|\bjust (minted|dropped)\b|\bmy (new )?(drop|piece|work)\b|\bgiveaway\b/i;
 function isShill(t){t=(t||"").replace(/https?:\/\/\S+/g,"");return SHILL_Y.test(t)&&!SHILL_N.test(t);}
+/* pinned collectors: their latest shill/call post always stays in the live wheel (up to 14 days old). 1 account per cron tick, up to 8 timeline pages; a pin is kept until a newer one is found or it turns 14 days old. */
+const PINS=["CozomoMedici","osseneth","Sneketoshi","unityofmulti","ZakalataMarie","Solarchi_"],PIN_X=/#arttank|art call|#tezostuesday/i,PIN_AGE=14*DAY;
+function fxVt(a){const v=(a&&a.verification)||{};return!v.verified?"none":v.type==="government"?"government":(v.type==="organization"||v.type==="business")?"business":"blue";}
+async function pinScan(S,now){S.pin=S.pin||{};S.pc=S.pc||0;const pick=[PINS[S.pc%PINS.length]];S.pc=(S.pc+1)%PINS.length;
+ await Promise.all(pick.map(async u=>{try{let cur=null,cands=[],stop=false;
+  for(let pg=0;pg<8&&!stop;pg++){const r=await fetch("https://api.fxtwitter.com/2/profile/"+u+"/statuses"+(cur?"?cursor="+encodeURIComponent(cur):""),FXH);if(!r.ok)break;const j=await r.json();const rs=j.results||[];
+   for(const x of rs){if(!x.author||x.author.screen_name.toLowerCase()!==u.toLowerCase()||x.replying_to)continue;const ts=sf(x.id);if(now-ts>PIN_AGE)continue;
+    const t=(x.text||"").replace(/https?:\/\/\S+/g,"");if((isShill(t)||PIN_X.test(t))&&(x.replies||0)>=60)cands.push({x,ts});}
+   if(rs.length&&now-sf(rs[rs.length-1].id)>PIN_AGE)stop=true;   // pinned tweet can be old, so judge by the page's last post
+   cur=j.cursor&&j.cursor.bottom;if(!cur||!rs.length)break;}
+  if(!cands.length){const o=S.pin[u];if(o&&now-sf(o.id)>PIN_AGE)delete S.pin[u];return;}
+  const mx=Math.max(...cands.map(c=>c.x.replies||0));const best=cands.filter(c=>(c.x.replies||0)>=mx*.5).sort((a,b)=>b.ts-a.ts)[0].x;
+  S.pin[u]={id:best.id,u:best.author.screen_name,t:(best.text||"").replace(/https?:\/\/\S+/g,"").trim().slice(0,90),av:(best.author.avatar_url||"").replace("_normal.","_200x200."),vt:fxVt(best.author),c:best.replies||0,p:1};
+ }catch(e){}}));
+ for(const k in S.pin)if(!PINS.includes(k))delete S.pin[k];}
 let SCTX={waitUntil(){}};
 async function scan(env,ctx){if(ctx)SCTX=ctx;const S=await hs(env);const now=Date.now();
  S.seeds=S.seeds||[];S.cand=S.cand||{};S.done=S.done||{};S.list=S.list||[];S.cur=S.cur||0;
@@ -375,6 +390,7 @@ async function scan(env,ctx){if(ctx)SCTX=ctx;const S=await hs(env);const now=Dat
  if(S.seeds.length>300)S.seeds=S.seeds.slice(-300);
  for(const id in S.cand)if(now-sf(id)>DAY)delete S.cand[id];{const ks=Object.keys(S.cand);if(ks.length>500)ks.sort((a,b)=>S.cand[a].n-S.cand[b].n||sf(a)-sf(b)).slice(0,ks.length-500).forEach(k=>delete S.cand[k]);}for(const id in S.done)if(now-S.done[id]>36*36e5)delete S.done[id];
  S.list=S.list.filter(v=>now-sf(v.id)<DAY&&isShill(v.f||v.t)).sort((a,b)=>b.c-a.c).slice(0,30);S.t=now;
+ await pinScan(S,now);
  await env.STATS.put(HSK,JSON.stringify(S));}
 
 /* ---------- Apify extra replies (lab) ---------- */
@@ -420,9 +436,10 @@ async function enrich(r, id, env, ctx) {
 }
 async function hotRoute(env) { const S = await hs(env); const now = Date.now(); const m = await hot(env);
   const seen = new Set(), au = new Set(), items = [];
+  for (const v of Object.values(S.pin || {}).sort((a, b) => sf(b.id) - sf(a.id))) { const a = (v.u || '').toLowerCase(); if (seen.has(v.id) || au.has(a) || now - sf(v.id) > PIN_AGE) continue; seen.add(v.id); au.add(a); items.push(v); }
   for (const v of (S.list || []).filter(v => now - sf(v.id) < DAY && isShill(v.f || v.t)).sort((a, b) => b.c - a.c)) { const a = (v.u || '').toLowerCase(); if (seen.has(v.id) || au.has(a)) continue; seen.add(v.id); au.add(a); const { f, ...o } = v; items.push(o); }
   for (const [id, v] of Object.entries(m)) { const a = (v.u || '').toLowerCase(); if (seen.has(id) || au.has(a) || now - sf(id) > DAY || !isShill(v.t)) continue; seen.add(id); au.add(a); items.push({ id, ...v }); }
-  return new Response(JSON.stringify({ items: items.slice(0, 12), t: S.t || 0 }), { headers: { ...JH, 'cache-control': 'public, max-age=120' } }); }
+  return new Response(JSON.stringify({ items: items.slice(0, 14), t: S.t || 0 }), { headers: { ...JH, 'cache-control': 'public, max-age=120' } }); }
 async function pxRoute(ctx) { const key = new Request('https://px.cache/v3'); const c = caches.default; const hit = await c.match(key); if (hit) return hit;
   const [eth, xtz, btc] = await Promise.all([px('ETH', 'ETH'), px('XTZ', 'XTZ'), px('BTC', 'XBT')]);
   const res = new Response(JSON.stringify({ eth, xtz, btc, t: Date.now() }), { headers: { ...JH, 'cache-control': (eth && xtz) ? 'public, max-age=60' : 'no-store' } });
