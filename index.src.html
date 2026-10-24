@@ -437,6 +437,7 @@ body.feedmode .zoom{display:none}
 .hth img{width:24px;height:24px;border-radius:50%;flex:none}
 .hth>span{display:flex;flex-direction:column;min-width:0;flex:1}
 .hth b{font-size:11px;font-weight:600}
+.hth b .vf{width:12px;height:12px;margin-left:3px;vertical-align:-2px}
 .hth span .mono{font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:none;color:var(--mute)}
 .hth i{font-style:normal;font-size:10px;color:var(--acc)}
 .hth:not(.on){pointer-events:none}
@@ -1028,7 +1029,7 @@ $('#lb').addEventListener('touchend',e=>{ if(tx==null) return; const d=e.changed
 (function(){ fetch(SSB+'/api/hot').then(r=>r.json()).then(j=>{ let L=(j.items||[]).slice(0,12); if(!L.length) return;
   while(L.length<5) L=L.concat(L);                       // enough rows to fill the wheel
   const h=$('#hot'), R=h.querySelector('.rows'), n=L.length;
-  R.innerHTML=L.map(t=>`<a class="hth" href="https://x.com/${esc(t.u)}/status/${esc(t.id)}" target="_blank" rel="noopener">${t.av?`<img src="${esc(t.av)}" alt="">`:''}<span><b>@${esc(t.u)}</b><span class="mono">${esc((t.t||'').slice(0,70))}</span></span></a>`).join('');
+  R.innerHTML=L.map(t=>`<a class="hth" href="https://x.com/${esc(t.u)}/status/${esc(t.id)}" target="_blank" rel="noopener">${t.av?`<img src="${esc(t.av)}" alt="">`:''}<span><b>@${esc(t.u)}${vf({vtype:t.vt})}</b><span class="mono">${esc((t.t||'').slice(0,70))}</span></span></a>`).join('');
   const els=[...R.children]; let c=0, paused=false;
   const place=()=>els.forEach((el,i)=>{ let d=((i-c)%n+n)%n; if(d>n/2) d-=n;   // -2..2 around the pill
     const far=Math.abs(d)>2, jump=el._d!=null&&Math.abs(d-el._d)>1; el._d=d; el.style.transition=(far||jump)?'none':''; el.style.transform=`translateY(${d*36}px) rotateX(${-d*28}deg) scale(${1-Math.abs(d)*.08})`;

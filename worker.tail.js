@@ -370,7 +370,7 @@ async function scan(env,ctx){if(ctx)SCTX=ctx;const S=await hs(env);const now=Dat
    const c=S.cand[rt.status]||(S.cand[rt.status]={n:0,u:rt.screen_name,by:[]});if(!c.by.includes(seed)){c.by.push(seed);c.n++;}}}catch(e){}}));
  const todo=Object.entries(S.cand).filter(([id,c])=>c.n>=2&&!S.done[id]).sort((a,b)=>b[1].n-a[1].n).slice(0,3);
  await Promise.all(todo.map(async([id,c])=>{S.done[id]=now;try{const r=await fxReplies(id,SCTX,env);if(!r.ok)return;const j=await r.json();const it=j.items||[];if(it.length<8||!j.root)return;if(!isShill(j.root.text))return;
-  S.list=S.list.filter(v=>v.id!==id);S.list.push({id,u:j.root.author&&j.root.author.username||c.u,t:(j.root.text||"").replace(/https?:\/\/\S+/g,"").trim().slice(0,90),f:(j.root.text||"").slice(0,400),av:j.root.author&&j.root.author.avatar||"",c:it.length});
+  S.list=S.list.filter(v=>v.id!==id);S.list.push({id,u:j.root.author&&j.root.author.username||c.u,t:(j.root.text||"").replace(/https?:\/\/\S+/g,"").trim().slice(0,90),f:(j.root.text||"").slice(0,400),av:j.root.author&&j.root.author.avatar||"",vt:j.root.author&&j.root.author.vtype||"none",c:it.length});
   const ns=it.map(x=>x.author&&x.author.username).filter(Boolean);for(const a of ns)if(!S.seeds.includes(a))S.seeds.push(a);}catch(e){}}));
  if(S.seeds.length>300)S.seeds=S.seeds.slice(-300);
  for(const id in S.cand)if(now-sf(id)>DAY)delete S.cand[id];{const ks=Object.keys(S.cand);if(ks.length>500)ks.sort((a,b)=>S.cand[a].n-S.cand[b].n||sf(a)-sf(b)).slice(0,ks.length-500).forEach(k=>delete S.cand[k]);}for(const id in S.done)if(now-S.done[id]>36*36e5)delete S.done[id];
@@ -409,7 +409,7 @@ async function enrich(r, id, env, ctx) {
   const body = await r.text(); let j; try { j = JSON.parse(body); } catch (e) { return new Response(body, r); }
   if (j.root && (j.items || []).length) ctx.waitUntil((async () => { try { const m = await hot(env); const now = Date.now();
     for (const k in m) if (now - m[k].last > 72 * 36e5) delete m[k];
-    const e = m[id] || { n: 0 }; e.n++; e.last = now; e.u = j.root.author && j.root.author.username || ''; e.t = (j.root.text || '').replace(/https?:\/\/\S+/g, '').trim().slice(0, 90); e.av = j.root.author && j.root.author.avatar || ''; e.c = (j.items || []).length; m[id] = e;
+    const e = m[id] || { n: 0 }; e.n++; e.last = now; e.u = j.root.author && j.root.author.username || ''; e.t = (j.root.text || '').replace(/https?:\/\/\S+/g, '').trim().slice(0, 90); e.av = j.root.author && j.root.author.avatar || ''; e.vt = j.root.author && j.root.author.vtype || 'none'; e.c = (j.items || []).length; m[id] = e;
     const top = Object.entries(m).sort((a, b) => b[1].last - a[1].last).slice(0, 40); await env.STATS.put(HOTK, JSON.stringify(Object.fromEntries(top))); } catch (e) {} })());
   if (env.APIFY_TOKEN && j.items) { try { const host = j.root && j.root.author && j.root.author.username;
     const got = await env.STATS.get('ap:' + id);
