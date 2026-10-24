@@ -466,6 +466,8 @@ body.loaded #slab{display:none}
 #gal.grid .info{flex:1}
 #gal.grid .info>.buy{margin-top:auto}
 @media (max-width:820px){ .ctl #plat{margin-left:0;width:100%} }
+/* 2026-10-24: masonry tops line up in every browser (Safari can carry a card's bottom margin to the next column's top) */
+#gal.masonry .card{display:inline-flex;width:100%;vertical-align:top}
 </style>
 </head>
 <body>
@@ -744,7 +746,7 @@ function drawChips(){
     if (x.platform) pc[x.platform]=(pc[x.platform]||0)+1;
     if (x.chain) cc[x.chain]=(cc[x.chain]||0)+1;
   });
-  const nf=S.items.filter(x=>S.favs[x.id]).length; if (nf) c.fav={label:'♥ in list',n:nf};
+  S.filters.delete('fav');
   const order=['fav'];
   $('#chips').innerHTML = order.filter(k=>c[k]).map(k=>`<button class="chip ${S.filters.has(k)?'on':''}" data-k="${k}">${esc(c[k].label)}<b>${c[k].n}</b></button>`).join('');
   const opt=(v,l,n)=>`<option value="${esc(v)}" ${S.plat===v?'selected':''}>${esc(l)}${n?' · '+n:''}</option>`;
