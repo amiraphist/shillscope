@@ -458,6 +458,14 @@ body.loaded #slab{display:none}
 [data-theme=light] #slab .px b{color:rgba(0,0,0,.5)}
 [data-theme=light] #slab .px .c{color:#1e9e55}
 [data-theme=light] #slab .px .c.dn{color:#c81e25}
+/* 2026-10-24: platform select sits in the slider row; empty chip row hides; grid cards equal height, collect button at the bottom */
+.ctl #plat{margin-left:auto;flex:none}
+#chiprow:has(#chips:empty){display:none}
+#gal.grid{align-items:stretch}
+#gal.grid .card{height:100%}
+#gal.grid .info{flex:1}
+#gal.grid .info>.buy{margin-top:auto}
+@media (max-width:820px){ .ctl #plat{margin-left:0;width:100%} }
 </style>
 </head>
 <body>
@@ -544,17 +552,17 @@ load();setInterval(function(){if(!document.hidden)load()},60000);});</script>
   </div>
   <div class="ctl">
     <div class="tune" id="tune">
-      <span class="end">sale</span>
+      <span class="end">type</span>
       <div class="track" id="track"><div class="rail"><i id="tfill"></i></div><div class="stops" id="stops"></div><div class="knob" id="knob"><span id="klabel">all</span></div></div>
     </div>
     <div class="tune" id="stune">
       <span class="end">sort</span>
       <div class="track" id="strack" style="--kw:112px"><div class="rail"><i id="sfill"></i></div><div class="stops" id="sstops"></div><div class="knob" id="sknob"><span id="sklabel">shuffle</span></div></div>
     </div>
-  </div>
-  <div class="row">
-    <div class="chips" id="chips"></div>
     <select id="plat" aria-label="platform"></select>
+  </div>
+  <div class="row" id="chiprow">
+    <div class="chips" id="chips"></div>
   </div>
   <div id="prog"></div>
 </div>
