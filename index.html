@@ -936,7 +936,8 @@ function drawList(){
   const tot={}; ids.forEach(k=>{ const p=S.favs[k].price; if(p) tot[p.cur]=(tot[p.cur]||0)+p.val; });
   let sum=Object.entries(tot).map(([c,v])=>(c==='USD'?'$'+(+v.toFixed(2)):(+v.toFixed(4))+' '+c)).join(' + ');
   const allUsd=Object.entries(tot).every(([c])=>c==='USD'||LIVE[c]); if(sum&&allUsd&&Object.keys(tot).some(c=>c!=='USD')){ const u=Object.entries(tot).reduce((a,[c,v])=>a+(c==='USD'?v:v*LIVE[c]),0); sum+=' ≈ '+usdTxt(u); }
-  $('#dclr').hidden=!n; $('#dsum').textContent = `${n} piece${n===1?'':'s'}${sum?' · ≈ '+sum:''}`;
+  const np=ids.filter(k=>S.favs[k].price).length;   // total only counts pieces that state a price, and says so (user, 2026-10-24)
+  $('#dclr').hidden=!n; $('#dsum').textContent = `${n} piece${n===1?'':'s'}`+(!sum?'':np===n?` · total ${sum}`:` · ${np} priced: ${sum}`);
   $('#dlist').innerHTML = n ? ids.map(k=>{ const f=S.favs[k]; return `<div class="ditem" data-id="${esc(k)}">
       <img src="${esc(f.thumb||'')}" alt="" loading="lazy">
       <div style="min-width:0"><b>${esc(f.name||f.u)}</b><span class="mono">${esc([f.plat,f.price&&f.price.label,f.ed].filter(Boolean).join(' · ')||'@'+f.u)}</span></div>
