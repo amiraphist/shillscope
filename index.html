@@ -514,7 +514,7 @@ function up(){on=false;el.classList.remove('drag');}
 el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up);
 function fmt(n){return n>=100?'$'+Math.round(n).toLocaleString('en-US'):'$'+n.toFixed(n>=1?2:3)}
 function put(id,d){var r=document.getElementById(id);if(!r||!d||!isFinite(d.p)||!d.p)return;window.LIVE=window.LIVE||{};window.LIVE[id.slice(3).toUpperCase()]=d.p;r.querySelector('.v').textContent=fmt(d.p);var c=r.querySelector('.c'),ch=d.c;c.textContent=(ch>=0?'▲':'▼')+Math.abs(ch).toFixed(1)+'%';c.classList.toggle('dn',ch<0);}
-function load(){fetch(SSB+'/api/px').then(function(r){return r.json()}).then(function(j){var first=!window.LIVE||!window.LIVE.ETH;put('px-eth',j.eth);put('px-xtz',j.xtz);put('px-btc',j.btc);if(first&&document.body.classList.contains('loaded')&&window.pxRefresh)window.pxRefresh();}).catch(function(){});}
+function load(){fetch(SSB+'/api/px').then(function(r){return r.json()}).then(function(j){var first=!window.LIVE||!window.LIVE.ETH;put('px-eth',j.eth);put('px-xtz',j.xtz);if(j.btc&&j.btc.p){window.LIVE=window.LIVE||{};window.LIVE.BTC=j.btc.p;}if(first&&document.body.classList.contains('loaded')&&window.pxRefresh)window.pxRefresh();}).catch(function(){});}
 load();setInterval(function(){if(!document.hidden)load()},60000);});</script>
 <section id="hero">
   <button id="thm" aria-label="toggle light / dark"><svg class="moon" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M20.7 14.6A8.5 8.5 0 0 1 9.4 3.3a8.5 8.5 0 1 0 11.3 11.3z"/></svg><svg class="sun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2" fill="currentColor" stroke="none"/><path d="M12 2v2.2M12 19.8V22M2 12h2.2M19.8 12H22M4.9 4.9l1.6 1.6M17.5 17.5l1.6 1.6M4.9 19.1l1.6-1.6M17.5 6.5l1.6-1.6"/></svg></button>
@@ -526,8 +526,7 @@ load();setInterval(function(){if(!document.hidden)load()},60000);});</script>
   </form>
   <p id="err" class="mono"></p>
   <div id="hot" hidden><p class="mono hl"><i class="dot"></i>art shill threads live now</p><div id="wheel"><div class="rows"></div></div></div>
-<div id="slab" role="group" aria-label="BTC, ETH and XTZ price"><i class="dot"></i>
-  <div class="px" id="px-btc"><b>BTC</b><span class="v">—</span><span class="c mono"></span></div>
+<div id="slab" role="group" aria-label="ETH and XTZ price"><i class="dot"></i>
   <div class="px" id="px-eth"><b>ETH</b><span class="v">—</span><span class="c mono"></span></div>
   <div class="px" id="px-xtz"><b>XTZ</b><span class="v">—</span><span class="c mono"></span></div>
 </div>
