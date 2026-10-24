@@ -543,13 +543,13 @@ load();setInterval(function(){if(!document.hidden)load()},60000);});</script>
     <div class="zoom" id="zoom"><button data-z="-1" aria-label="smaller cards" title="smaller cards"><svg viewBox="0 0 16 16"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg></button><button data-z="1" aria-label="bigger cards" title="bigger cards"><svg viewBox="0 0 16 16"><rect x="1.5" y="1.5" width="13" height="13" rx="3"/></svg></button></div>
   </div>
   <div class="ctl">
-    <div class="tune" id="stune">
-      <span class="end">sort</span>
-      <div class="track" id="strack" style="--kw:112px"><div class="rail"><i id="sfill"></i></div><div class="stops" id="sstops"></div><div class="knob" id="sknob"><span id="sklabel">shuffle</span></div></div>
-    </div>
     <div class="tune" id="tune">
       <span class="end">sale</span>
       <div class="track" id="track"><div class="rail"><i id="tfill"></i></div><div class="stops" id="stops"></div><div class="knob" id="knob"><span id="klabel">all</span></div></div>
+    </div>
+    <div class="tune" id="stune">
+      <span class="end">sort</span>
+      <div class="track" id="strack" style="--kw:112px"><div class="rail"><i id="sfill"></i></div><div class="stops" id="sstops"></div><div class="knob" id="sknob"><span id="sklabel">shuffle</span></div></div>
     </div>
   </div>
   <div class="row">
@@ -737,7 +737,7 @@ function drawChips(){
     if (x.chain) cc[x.chain]=(cc[x.chain]||0)+1;
   });
   const nf=S.items.filter(x=>S.favs[x.id]).length; if (nf) c.fav={label:'♥ in list',n:nf};
-  const order=['1of1','fav'];
+  const order=['fav'];
   $('#chips').innerHTML = order.filter(k=>c[k]).map(k=>`<button class="chip ${S.filters.has(k)?'on':''}" data-k="${k}">${esc(c[k].label)}<b>${c[k].n}</b></button>`).join('');
   const opt=(v,l,n)=>`<option value="${esc(v)}" ${S.plat===v?'selected':''}>${esc(l)}${n?' · '+n:''}</option>`;
   const ps=Object.entries(pc).sort((a,b)=>b[1]-a[1]), cs=Object.entries(cc).sort((a,b)=>b[1]-a[1]);
@@ -773,7 +773,7 @@ $('#zoom').onclick=e=>{ const b=e.target.closest('button'); if(!b||b.disabled) r
 window.addEventListener('resize',applyCols);
 
 /* ================= sorts ================= */
-const MAIN_SORTS = ['shuffle','cheap','pricey','gems'];   // only these 4 (user, 2026-10-23); default order stays smart
+const MAIN_SORTS = ['shuffle','cheap','pricey'];   // user-picked sorts (hidden gems removed 2026-10-24); default order stays smart
 const SORTS = [
   ['smart','✦ smart'],['rising','rising now'],['gems','hidden gems'],['collect','ready to collect'],
   ['oneofone','1/1 first'],['cheap','lowest price'],['pricey','highest price'],['likes','most liked'],['reposts','most reposted'],
@@ -789,7 +789,7 @@ const BY = {
   likes:(a,b)=>b.likes-a.likes, reposts:(a,b)=>b.reposts-a.reposts||b.likes-a.likes, talk:(a,b)=>b._talk-a._talk||b._smart-a._smart,
   new:(a,b)=>new Date(b.created_at)-new Date(a.created_at), first:(a,b)=>new Date(a.created_at)-new Date(b.created_at),
   big:(a,b)=>b.author.followers-a.author.followers, small:(a,b)=>(a.author.followers-b.author.followers)||(b._smart-a._smart) };
-const MODES=[{k:'all',l:'all',f:()=>true},{k:'auc',l:'auction',f:x=>x.sale==='auction'},{k:'bn',l:'buy now',f:x=>x.sale==='buy now'},{k:'ed',l:'edition',f:x=>!!x.ed&&x.ed!=='1/1'}];
+const MODES=[{k:'all',l:'all',f:()=>true},{k:'auc',l:'auction',f:x=>x.sale==='auction'},{k:'bn',l:'buy now',f:x=>x.sale==='buy now'},{k:'ed',l:'edition',f:x=>!!x.ed&&x.ed!=='1/1'},{k:'one',l:'1/1',f:x=>x.ed==='1/1'}];   // 1/1 moved here from its chip (user, 2026-10-24)
 S.mode=0;
 function drawSorts(){ placeSort(); }
 function sortIdx(){ return Math.max(0,MAIN_SORTS.indexOf(S.sort)); }
