@@ -141,7 +141,7 @@ requestAnimationFrame(frame);})();</script>
 <main>
 <section id="gen">
   <div><h1>cm <span>gen</span></h1><p class="sub mono">paste your piece. get your shill reply.</p></div>
-  <form id="f" autocomplete="off"><input id="u" placeholder="objkt · transient · superrare · manifold link" inputmode="url" spellcheck="false" aria-label="art link"><button class="btn" id="go">gen</button></form>
+  <form id="f" autocomplete="off"><input id="u" placeholder="superrare · transient · objkt · manifold link" inputmode="url" spellcheck="false" aria-label="art link"><button class="btn" id="go">gen</button></form>
   <p id="err" class="mono"></p>
   <div class="cols"><div class="lc">
   <div class="fields">
@@ -193,7 +193,8 @@ $('#cimg').onclick=()=>{ const b=$('#cimg'); if(!IMG) return; hit('gi'); clearTi
    .finally(()=>{ clearTimeout(b._t); b._t=setTimeout(()=>b.textContent='copy image',2000); }); };
 F.forEach(k=>$('#'+k).addEventListener('input',compose));
 $('#f').onsubmit=async e=>{ e.preventDefault(); const url=$('#u').value.trim(); $('#err').textContent='';
-  if(!/^https?:\/\//.test(url)){ $('#err').textContent='paste a link to your piece'; return; }
+  let okSite=false; try{ const h=new URL(url); okSite=/^https?:$/.test(h.protocol)&&/^(?:www\.)?(?:superrare\.com|transient\.xyz|objkt\.com|(?:[\w-]+\.)*manifold\.xyz)$/i.test(h.hostname); }catch(_){}
+  if(!okSite){ $('#err').textContent='only superrare, transient, objkt or manifold links'; return; }
   $('#go').disabled=true; $('#go').textContent='…';
   try{ const j=await (await fetch(A+'/api/gen?url='+encodeURIComponent(url))).json();
     if(j.error) $('#err').textContent=j.error;
