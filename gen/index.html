@@ -47,6 +47,7 @@ form input::placeholder{color:#666}
 .btn:hover{background:linear-gradient(180deg,rgba(200,60,64,.7),rgba(150,30,36,.55) 60%,rgba(200,60,64,.6))}
 .btn:active{transform:scale(.94)}.btn:disabled{opacity:.45;cursor:wait}
 #err{min-height:14px;color:#ff7b7b;margin-top:-6px}
+#how{margin-top:-6px;opacity:.75}#how:empty,#how.gone{display:none}
 .fields{display:grid;grid-template-columns:1.3fr 1fr;gap:10px}
 .cols{display:flex;flex-direction:column;gap:14px}.lc{display:contents}.fields{order:0}#art{order:1}#out{order:2}.outrow{order:3}
 .f{display:flex;flex-direction:column;gap:5px;min-width:0}.f.w{grid-column:1/-1}
@@ -93,6 +94,13 @@ form input::placeholder{color:#666}
   .btn{padding:0 18px}
   .rt{gap:6px}.tg{padding:7px 9px 7px 7px;gap:6px}.tg i{width:26px;height:15px}.tg i:after{width:11px;height:11px}.tg input:checked+i:after{transform:translateX(11px)}
 }
+#tipm{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.45);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}#tipm.on{display:flex}
+#tipm .tp{width:min(420px,calc(100vw - 28px));padding:20px 18px 16px;border-radius:20px;color:#fff;border:.5px solid rgba(255,255,255,.28);background:linear-gradient(180deg,rgba(40,40,44,.82),rgba(20,20,22,.88));box-shadow:inset 0 1px 1px rgba(255,255,255,.25),0 20px 50px rgba(0,0,0,.5);font:400 12px "JetBrains Mono",monospace}
+#tipm h3{margin:0 0 4px;font:600 15px "JetBrains Mono",monospace;letter-spacing:.02em}#tipm .ts{margin:0 0 14px;opacity:.65}
+#tipm .tr{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:.5px solid rgba(255,255,255,.12)}#tipm .tr b{width:34px;font-weight:600;color:#e0242b}#tipm .tr code{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.85;font:inherit}
+#tipm .tr button{flex:none;padding:6px 11px;border-radius:999px;border:.5px solid rgba(255,255,255,.3);background:rgba(255,255,255,.08);color:inherit;font:500 11px "JetBrains Mono",monospace;cursor:pointer}#tipm .tr button:hover{background:#e0242b;border-color:#e0242b;color:#fff}
+#tipm .tx{position:absolute;opacity:0}#tipm .tc{display:block;margin:12px auto 0;background:none;border:0;color:inherit;opacity:.55;font:inherit;cursor:pointer}
+a.tipl{cursor:pointer}#gfoot{text-align:center;color:var(--mute);font:400 11.5px "JetBrains Mono",monospace;padding:28px 16px max(22px,env(safe-area-inset-bottom))}#gfoot a{color:inherit}#gfoot a:hover{color:var(--fg)}
 </style>
 </head>
 <body>
@@ -141,13 +149,14 @@ requestAnimationFrame(frame);})();</script>
 <main>
 <section id="gen">
   <div><h1>cm <span>gen</span></h1><p class="sub mono">paste your piece. get your shill reply.</p></div>
-  <form id="f" autocomplete="off"><input id="u" placeholder="objkt · transient · superrare · manifold link" inputmode="url" spellcheck="false" aria-label="art link"><button class="btn" id="go">gen</button></form>
+  <form id="f" autocomplete="off"><input id="u" placeholder="superrare · transient · objkt · manifold link" inputmode="url" spellcheck="false" aria-label="art link"><button class="btn" id="go">gen</button></form>
+  <p class="mono hint" id="how">just the link is enough. we fill in the rest, you can edit anything before you copy.</p>
   <p id="err" class="mono"></p>
   <div class="cols"><div class="lc">
   <div class="fields">
     <div class="f c3"><label class="mono">title</label><input id="title"></div>
     <div class="f c3"><label class="mono">collection</label><input id="coll"></div>
-    <div class="f c3"><label class="mono">sale</label><select id="sale"><option value="">—</option><option>1/1 · buy now</option><option>reserve auction</option><option>auction</option><option>limited edition</option><option>open edition</option><option>buy now</option><option>offers</option></select></div>
+    <div class="f c3"><label class="mono">sale</label><select id="sale"><option value="">—</option><option>1/1 · buy now</option><option>reserve auction</option><option>auction</option><option>limited edition</option><option>open edition</option><option>offers</option></select></div>
     <div class="f c3 pr"><label class="mono">price</label><div class="price"><input id="price" inputmode="decimal" placeholder="0.05"><select id="cur"><option>$ETH</option><option>$XTZ</option><option>$SOL</option><option>$BTC</option><option>$USD</option></select></div></div>
     <div class="f w"><label class="mono">description</label><textarea id="desc" rows="2"></textarea></div>
   </div>
@@ -193,8 +202,9 @@ $('#cimg').onclick=()=>{ const b=$('#cimg'); if(!IMG) return; hit('gi'); clearTi
    .finally(()=>{ clearTimeout(b._t); b._t=setTimeout(()=>b.textContent='copy image',2000); }); };
 F.forEach(k=>$('#'+k).addEventListener('input',compose));
 $('#f').onsubmit=async e=>{ e.preventDefault(); const url=$('#u').value.trim(); $('#err').textContent='';
-  if(!/^https?:\/\//.test(url)){ $('#err').textContent='paste a link to your piece'; return; }
-  $('#go').disabled=true; $('#go').textContent='…';
+  let okSite=false; try{ const h=new URL(url); okSite=/^https?:$/.test(h.protocol)&&/^(?:www\.)?(?:superrare\.com|transient\.xyz|objkt\.com|(?:[\w-]+\.)*manifold\.xyz)$/i.test(h.hostname); }catch(_){}
+  if(!okSite){ $('#err').textContent='only superrare, transient, objkt or manifold links'; return; }
+  $('#go').disabled=true; $('#go').textContent='…'; $('#how').classList.add('gone');
   try{ const j=await (await fetch(A+'/api/gen?url='+encodeURIComponent(url))).json();
     if(j.error) $('#err').textContent=j.error;
     $('#title').value=j.title||''; $('#coll').value=j.collection||''; $('#price').value=j.price||''; $('#link').value=j.link||url; $('#desc').value=(()=>{ let d=(j.desc||'').split(/\n\s*\n/).map(x=>x.trim()).filter(x=>x&&x!==j.title)[0]||''; return d.length>220?d.slice(0,217).replace(/\s+\S*$/,'')+'…':d; })();
@@ -209,5 +219,18 @@ $('#wl').addEventListener('change',compose); $('#dimg').addEventListener('click'
 $('#copy').onclick=()=>{ const t=$('#out').value; if(!t) return; hit('gt'); (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).catch(()=>{ $('#out').select(); document.execCommand('copy'); });
   const b=$('#copy'); b.textContent='copied'; b.classList.add('ok'); setTimeout(()=>{ b.textContent='copy'; b.classList.remove('ok'); },1400); };
 </script>
+<footer id="gfoot">cm gen · by <a href="https://x.com/amiraphist" target="_blank" rel="noopener">@amiraphist</a> · <a class="tipl" role="button" tabindex="0">tip</a></footer>
+<div id="tipm" role="dialog" aria-modal="true" aria-label="tip"><div class="tp">
+<h3>tip the builder</h3><p class="ts">shillscope stays free. if it helped you find art, a tip keeps it running.</p>
+<div class="tr"><b>ETH</b><code>0x6A32A5CD487ea1EB496BE06eD64Af22afbC123d1</code><button data-a="0x6A32A5CD487ea1EB496BE06eD64Af22afbC123d1">copy</button></div>
+<div class="tr"><b>SOL</b><code>3ovQ6VN35b84FKxvXx53rPq7E8najTsDdXPDkiv4QpE5</code><button data-a="3ovQ6VN35b84FKxvXx53rPq7E8najTsDdXPDkiv4QpE5">copy</button></div>
+<div class="tr"><b>XTZ</b><code>tz1hoapdBuxGVbq27HjGNktqkb82SYuoPB45</code><button data-a="tz1hoapdBuxGVbq27HjGNktqkb82SYuoPB45">copy</button></div>
+<button class="tc" type="button">close</button></div></div>
+<script>(function(){var m=document.getElementById('tipm'),b=null;
+function open(){m.classList.add('on');}function close(){m.classList.remove('on');}
+b&&b.addEventListener('click',open);document.querySelectorAll('.tipl').forEach(function(a){a.addEventListener('click',open);a.addEventListener('keydown',function(e){if(e.key==='Enter')open();});});
+m.addEventListener('click',function(e){if(e.target===m||e.target.classList.contains('tc'))close();});addEventListener('keydown',function(e){if(e.key==='Escape')close();});
+function cp(t){if(navigator.clipboard&&navigator.clipboard.writeText)return navigator.clipboard.writeText(t);var x=document.createElement('textarea');x.value=t;x.className='tx';m.appendChild(x);x.select();try{document.execCommand('copy')}catch(e){}x.remove();return Promise.resolve();}
+m.querySelectorAll('.tr button').forEach(function(k){k.addEventListener('click',function(){var d=function(){k.textContent='copied';clearTimeout(k._t);k._t=setTimeout(function(){k.textContent='copy'},1500);};try{var r=cp(k.dataset.a);d();r&&r.catch&&r.catch(function(){});}catch(e){d();}});});})();</script>
 </body>
 </html>
