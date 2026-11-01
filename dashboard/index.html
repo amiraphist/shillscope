@@ -75,6 +75,7 @@ footer{margin-top:22px;text-align:center;font-size:10.5px;color:#555}
 .err{color:#ff6b70;font-size:12px;min-height:16px}
 .load{opacity:.5;transition:opacity .2s}
 @media(max-width:560px){.grid{grid-template-columns:1fr}.t strong{font-size:23px}.t i{display:block;margin:4px 0 0}.nav .d{min-width:110px}.b small{font-size:7.5px}}
+.so{display:inline-block;position:relative;width:1.04ex;height:1.04ex;margin:0 .055em 0 .075em;border:.235ex solid currentColor;border-radius:50%;box-sizing:border-box;vertical-align:baseline;background:radial-gradient(circle,currentColor 0 22%,transparent 24%)}.sr{font-size:0;font-style:normal}#cityb::before{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:1.5px;background:conic-gradient(from var(--ca),transparent 0 62%,rgba(255,255,255,.25) 72%,#fff 86%,transparent 100%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:cmgspin 3s linear infinite;animation-delay:-1.5s;pointer-events:none}[data-theme=light] #cityb::before{background:conic-gradient(from var(--ca),transparent 0 62%,rgba(20,20,20,.2) 72%,#141414 86%,transparent 100%)}@media (prefers-reduced-motion:reduce){#cityb::before{animation:none;background:#fff;opacity:.5}[data-theme=light] #cityb::before{background:#141414;opacity:.4}}</style>
 </style>
 </head>
 <body>
@@ -94,7 +95,7 @@ function nice(s){var p=s.split('-');return (+p[2])+' '+MO[+p[1]-1]+' '+p[0]}
 function short(s){var p=s.split('-');return (+p[2])+' '+MO[+p[1]-1]}
 
 function login(msg){
- app.innerHTML='<div class="lg"><h1>shill<span>scope</span></h1><form id="f"><input id="pw" type="password" autocomplete="current-password" placeholder="password" autofocus><button type="submit">enter</button><div class="err" id="er">'+esc(msg||'')+'</div></form></div>';
+ app.innerHTML='<div class="lg"><h1>shill<span>sc<b class="so" aria-hidden="true"></b><i class="sr">o</i>pe</span></h1><form id="f"><input id="pw" type="password" autocomplete="current-password" placeholder="password" autofocus><button type="submit">enter</button><div class="err" id="er">'+esc(msg||'')+'</div></form></div>';
  document.getElementById('f').onsubmit=function(e){e.preventDefault();var pw=document.getElementById('pw').value;if(!pw)return;
   var b=this.querySelector('button');b.textContent='…';
   fetch(API+'/api/dash/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({pw:pw})}).then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}})})
@@ -133,7 +134,7 @@ function render(){
  var ap='';if(j.apify){var a=j.apify,accs=(a.acc&&a.acc.length)?a.acc:[{name:'main',used:a.used,max:a.max,reset:a.reset}];
   ap='<section><h2>apify <span>reply scans today '+fmt(a.runs)+' / '+fmt(a.cap)+(accs.length>1?' · using '+(a.use===2?'backup':'main'):'')+'</span></h2>'+accs.map(function(c,k){var pct=c.max?Math.min(100,Math.round((c.used||0)/c.max*100)):0,on=accs.length>1&&((a.use===2)===(k===1));
    return (accs.length>1?'<p class="mute" style="margin:'+(k?'14px':'0')+' 0 6px">'+c.name+(on?' · active':'')+'</p>':'')+(c.max!=null?'<div class="ap"><div><b>$'+Number(c.used||0).toFixed(2)+'</b><small>used this month</small></div><div><b>$'+Math.max(0,c.max-(c.used||0)).toFixed(2)+'</b><small>left of $'+Number(c.max).toFixed(2)+(c.reset?' · resets '+short(String(c.reset).slice(0,10)):'')+'</small></div></div><div class="meter"><i style="width:'+pct+'%"></i></div>':'<p class="mute">credit info unavailable</p>')}).join('')+'</section>'}
- app.innerHTML='<header><h1>shill<span>scope</span></h1><p><span class="dot"></span>stats<br><button id="lo">log out</button></p></header>'+
+ app.innerHTML='<header><h1>shill<span>sc<b class="so" aria-hidden="true"></b><i class="sr">o</i>pe</span></h1><p><span class="dot"></span>stats<br><button id="lo">log out</button></p></header>'+
  '<div class="bar0"><div class="pills">'+[['1','day'],['7','7d'],['30','30d'],['all','all']].map(function(p){return '<button class="pill'+(r===p[0]?' on':'')+'" data-r="'+p[0]+'">'+p[1]+'</button>'}).join('')+'</div>'+
  (navOn?'<div class="nav"><button id="pv"'+(j.start<=j.first?' disabled':'')+'>‹</button><span class="d">'+esc(label)+'</span><button id="nx"'+(j.end>=j.today?' disabled':'')+'>›</button></div>':'<div class="nav"><span class="d">since '+short(j.first)+'</span></div>')+'</div>'+
  '<section><h2>'+esc(label)+' <span>'+esc(cmp)+'</span></h2><div class="tiles">'+tile(fmt(T.v),'visits',1,delta(T.v,pv('v')))+tile(fmt(T.g),'galleries',0,delta(T.g,pv('g')))+tile(T.v?(T.g/T.v).toFixed(1):'–','galleries per visit')+'</div></section>'+
