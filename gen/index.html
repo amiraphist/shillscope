@@ -101,7 +101,7 @@ form input::placeholder{color:#666}
 #tipm .tr button{flex:none;padding:6px 11px;border-radius:999px;border:.5px solid rgba(255,255,255,.3);background:rgba(255,255,255,.08);color:inherit;font:500 11px "JetBrains Mono",monospace;cursor:pointer}#tipm .tr button:hover{background:#e0242b;border-color:#e0242b;color:#fff}
 #tipm .tx{position:absolute;opacity:0}#tipm .tc{display:block;margin:12px auto 0;background:none;border:0;color:inherit;opacity:.55;font:inherit;cursor:pointer}
 a.tipl{cursor:pointer}#gfoot{text-align:center;color:var(--mute);font:400 11.5px "JetBrains Mono",monospace;padding:28px 16px max(22px,env(safe-area-inset-bottom))}#gfoot a{color:inherit}#gfoot a:hover{color:var(--fg)}
-</style>
+.so{display:inline-block;position:relative;width:1.04ex;height:1.04ex;margin:0 .055em 0 .075em;border:.235ex solid currentColor;border-radius:50%;box-sizing:border-box;vertical-align:baseline;background:radial-gradient(circle,currentColor 0 22%,transparent 24%)}.sr{font-size:0;font-style:normal}</style>
 </head>
 <body>
 <div id="bg"><canvas id="trk" aria-hidden="true"></canvas><div id="orb"></div></div>
@@ -145,7 +145,7 @@ function frame(now){x.clearRect(0,0,W,H);
  XS.forEach(function(q){var e=document.querySelector(q);if(!e)return;var b=e.getBoundingClientRect();if(b.width&&b.height&&b.bottom>0&&b.top<H)x.fillRect(b.left-6-1e4,b.top-4,b.width+12,b.height+8);});
  x.restore();requestAnimationFrame(frame);}
 requestAnimationFrame(frame);})();</script>
-<div class="top"><a href="/">shill<span>scope</span></a><span class="mono">beta</span></div>
+<div class="top"><a href="/">shill<span>sc<b class="so" aria-hidden="true"></b><i class="sr">o</i>pe</span></a><span class="mono">beta</span></div>
 <main>
 <section id="gen">
   <div><h1>cm <span>gen</span></h1><p class="sub mono">paste your piece. get your shill reply.</p></div>
