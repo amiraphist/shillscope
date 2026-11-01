@@ -555,7 +555,7 @@ load();setInterval(function(){if(!document.hidden)load()},60000);});</script>
   <a id="cmg" href="/gen/">cm gen</a>
   <button id="cityb" type="button" aria-label="enter shill square"><span class="cb" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span>shill square</button>
 <script>/* shillscope city: nothing loads until the cube is clicked (or /#city); the module is only prefetched when idle */
-(function(){var b=document.getElementById('cityb'),c=document.getElementById('cmg'),V='18',src=(window.SSB||'')+'/city/city.js?v='+V,p=null;
+(function(){var b=document.getElementById('cityb'),c=document.getElementById('cmg'),V='19',src=(window.SSB||'')+'/city/city.js?v='+V,p=null;
 function pos(){if(c&&b&&c.offsetWidth)b.style.left=(c.offsetLeft+c.offsetWidth+8)+'px';}
 function load(){return p||(p=new Promise(function(ok,no){var s=document.createElement('script');s.src=src;s.async=true;s.onload=ok;s.onerror=function(){p=null;no();};document.head.appendChild(s);}));}
 function go(anim){load().then(function(){window.ssCity&&window.ssCity.open(anim);},function(){});}
