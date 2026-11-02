@@ -425,8 +425,8 @@ body.feedmode .zoom{display:none}
 @keyframes blink{50%{opacity:.25}}
 #count{font-size:11px;letter-spacing:.02em;opacity:.62;margin:14px auto 2px;padding:0 26px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #count:empty{display:none}
-#count .sd{display:inline-block;width:6px;height:6px;border-radius:50%;background:#e0242b;margin-right:7px;vertical-align:1px}
-#count .sd{animation:sdbreath 2.6s ease-in-out infinite}@keyframes sdbreath{0%,100%{box-shadow:0 0 0 0 rgba(224,36,43,.55),0 0 4px rgba(224,36,43,.6)}50%{box-shadow:0 0 0 4px rgba(224,36,43,0),0 0 9px rgba(224,36,43,.9)}}
+#count .sd{display:inline-block;width:6px;height:6px;border-radius:50%;background:#fff;box-shadow:0 0 7px #fff;margin-right:8px;vertical-align:1px}
+#count .sd{animation:blink 2s infinite}#count .sd.on{animation:blink .7s infinite}[data-theme=light] #count .sd{background:#141414;box-shadow:0 0 6px rgba(0,0,0,.35)}@media (prefers-reduced-motion:reduce){#count .sd{animation:none}}   /* live dot = same white blinking dot as the main page (user, 2026-11-02) */
 #count .sd.on{animation:blink .7s infinite,sdbreath 1.4s ease-in-out infinite}@media (prefers-reduced-motion:reduce){#count .sd{animation:none}}   /* live dot: always breathing, faster while loading (user, 2026-11-02) */
 #count .sm{display:none}
 @media (max-width:820px){ #count{padding:0 12px;margin-top:12px} #count .lg{display:none} #count .sm{display:inline} }
