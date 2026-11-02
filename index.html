@@ -139,7 +139,7 @@ select{cursor:pointer}
 .tag{font-size:12px;border:1px solid #2a2a2a;border-radius:7px;padding:2px 7px;color:#cfcfcf}
 .tag.price{color:#fff;border-color:#444}
 .tag.plat{color:var(--fg);background:#1a1a1a}
-.txt{font-size:13px;line-height:1.5;color:#aaa;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
+.txt{font-size:13px;line-height:1.5;color:#aaa;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
 .stats{display:flex;gap:12px}
 .buy{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 12px;border-radius:7px;font-size:13px;font-weight:500;background:var(--fg);color:#000;transition:background .2s,color .2s}
 .buy:hover{background:var(--acc);color:#fff}
@@ -270,7 +270,7 @@ body.feeding #cl{top:max(12px,env(safe-area-inset-top));bottom:auto;padding:9px 
   .who{padding:9px 9px 8px;gap:8px}.who img{width:26px;height:26px}.who b{font-size:12.5px}
   .rank{display:none}
   .info{padding:8px 9px 10px;gap:7px}
-  .txt{font-size:12px;-webkit-line-clamp:3}
+  .txt{font-size:12px;-webkit-line-clamp:2}
   .buy{padding:8px;font-size:12px}
   .fav{opacity:1}
   #lb{grid-template-columns:1fr;grid-template-rows:auto 1fr}
@@ -959,7 +959,7 @@ function card(x){
     </div>
     <div class="info">
       ${tags?`<div class="tags">${tags}</div>`:''}
-      ${shortTxt(x)?`<p class="txt">${esc(shortTxt(x))}</p>`:''}
+      ${shortTxt(x)?`<p class="txt" title="${esc(shortTxt(x))}">${esc(shortTxt(x))}</p>`:''}
       ${statsOf(x)}
       ${btnOf(x)}
     </div>`;
@@ -1008,18 +1008,24 @@ function fav(x){
 function drawList(){
   const ids=Object.keys(S.favs).sort((a,b)=>(S.favs[b].t||0)-(S.favs[a].t||0)); const n=ids.length;
   $('#cl').hidden=!n || !document.body.classList.contains('loaded'); $('#cln').textContent=n;
-  const tot={}; ids.forEach(k=>{ const p=S.favs[k].price; if(p) tot[p.cur]=(tot[p.cur]||0)+p.val; });
-  let sum=Object.entries(tot).map(([c,v])=>(c==='USD'?'$'+(+v.toFixed(2)):(+v.toFixed(4))+' '+c)).join(' + ');
-  const allUsd=Object.entries(tot).every(([c])=>c==='USD'||LIVE[c]); if(sum&&allUsd&&Object.keys(tot).some(c=>c!=='USD')){ const u=Object.entries(tot).reduce((a,[c,v])=>a+(c==='USD'?v:v*LIVE[c]),0); sum+=' ≈ '+usdTxt(u); }
-  const np=ids.filter(k=>S.favs[k].price).length;   // total only counts pieces that state a price, and says so (user, 2026-10-24)
-  $('#dclr').hidden=!n; $('#dsum').textContent = `${n} piece${n===1?'':'s'}`+(!sum?'':np===n?` · total ${sum}`:` · ${np} priced: ${sum}`);
+  // real listing price from the platform when we can read it; tweet price only as fallback (user, 2026-11-02)
+  S.lp=S.lp||{}; S.lq=S.lq||[]; ids.forEach(k=>{ const f=S.favs[k]; if(f.buy && !(k in S.lp)){ S.lp[k]=null; S.lq.push([k,f.buy]); } }); priceNext();
+  const eff=k=>{ const f=S.favs[k], l=S.lp[k]; if(l&&l.ok){ if(l.kind==='buy'&&l.cur) return {val:l.val,cur:l.cur,kind:'buy'}; if(l.kind==='auction') return {val:l.val,cur:l.cur,kind:'auction'}; return {kind:'none'}; } return f.price?{val:f.price.val,cur:f.price.cur,kind:'buy',tw:1}:{kind:'none'}; };
+  const tot={}; let nb=0, na=0, pend=0; ids.forEach(k=>{ if(S.lp[k]===null) pend++; const p=eff(k); if(p.kind==='buy'){ nb++; tot[p.cur]=(tot[p.cur]||0)+p.val; } else if(p.kind==='auction') na++; });
+  const fmtc=(c,v)=>c==='USD'?'$'+(+v.toFixed(2)):(+v.toFixed(4))+' '+c.toLowerCase();
+  let sum=Object.entries(tot).sort((a,b)=>b[1]-a[1]).map(([c,v])=>fmtc(c,v)).join(' + ');
+  const allUsd=Object.keys(tot).every(c=>c==='USD'||LIVE[c]); if(sum&&allUsd&&Object.keys(tot).some(c=>c!=='USD')){ const u=Object.entries(tot).reduce((a,[c,v])=>a+(c==='USD'?v:v*LIVE[c]),0); sum+=' ≈ '+usdTxt(u); }
+  const rest=n-nb-na-pend;
+  $('#dclr').hidden=!n; $('#dsum').textContent = `${n} piece${n===1?'':'s'}`+(sum?(nb===n?` · total ${sum}`:` · ${nb} buy now: ${sum}`):'')+(na?` · ${na} in auction`:'')+(rest>0&&(sum||na)?` · ${rest} no price`:'')+(pend?' · checking prices…':'');
   $('#dlist').innerHTML = n ? ids.map(k=>{ const f=S.favs[k]; return `<div class="ditem" data-id="${esc(k)}">
       <img src="${esc(f.thumb||'')}" alt="" loading="lazy">
-      <div style="min-width:0"><b>${esc(f.name||f.u)}</b><span class="mono">${esc([f.plat,f.price&&f.price.label,f.ed].filter(Boolean).join(' · ')||'@'+f.u)}</span></div>
+      <div style="min-width:0"><b>${esc(f.name||f.u)}</b><span class="mono">${esc([f.plat,(p=>p.kind==='buy'?fmtc(p.cur,p.val):p.kind==='auction'?'auction '+fmtc(p.cur,p.val):(S.lp[k]&&S.lp[k].ok?'not listed':''))(eff(k)),f.ed].filter(Boolean).join(' · ')||'@'+f.u)}</span></div>
       ${f.buy?`<a class="buy" href="${esc(f.buy)}" target="_blank" rel="noopener">collect ↗</a>`:`<a class="buy ghost" href="${esc(f.url)}" target="_blank" rel="noopener">x ↗</a>`}
       <button class="rm" title="remove from list" aria-label="remove">✕</button>
     </div>`; }).join('') : '<p class="mono" style="padding:30px 4px">tap ♥ on any piece to add it here.</p>';
 }
+function priceNext(){ if(S.lbusy||!S.lq||!S.lq.length) return; const [k,u]=S.lq.shift(); S.lbusy=1;   // one at a time, platforms rate-limit bursts
+  fetch(SSB+'/api/price?u='+encodeURIComponent(u)).then(r=>r.json()).then(j=>{ S.lp[k]=j&&j.ok?j:false; }).catch(()=>{ S.lp[k]=false; }).finally(()=>{ S.lbusy=0; drawList(); priceNext(); }); }
 function unfav(id){ const x=S.items.find(i=>i.id===id);
   if(x) fav(x); else { delete S.favs[id]; try{localStorage.setItem('ss:favs',JSON.stringify(S.favs));}catch(_){} drawChips(); drawList(); } }
 $('#dlist').onclick=e=>{ const b=e.target.closest('.rm'); if(!b) return; const it=b.closest('.ditem'); const id=it.dataset.id;
