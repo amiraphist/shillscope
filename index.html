@@ -574,6 +574,7 @@ addEventListener('resize',pos);if(document.fonts&&document.fonts.ready)document.
     <button id="go">go</button>
   </form>
   <p id="err" class="mono"></p>
+<div id="wait" hidden><span class="eye"><i></i></span><p class="mono">reading the thread…</p><p class="mono sub">big threads take a few seconds</p></div>
   <div id="hot" hidden><p class="mono hl"><i class="dot"></i>art shill threads live now</p><div id="wheel"><div class="rows"></div></div></div>
 <div id="slab" role="group" aria-label="ETH and XTZ price"><i class="dot"></i>
   <div class="px" id="px-eth"><b>ETH</b><span class="v">—</span><span class="c mono"></span></div>
@@ -608,6 +609,16 @@ addEventListener('resize',pos);if(document.fonts&&document.fonts.ready)document.
 
 <div id="morepop"></div>
 <p class="mono" id="count"></p>
+<style>/* loading eye (user, 2026-11-02): the scope mark's pupil looks around, white <-> red, until the first cards land */
+#wait{position:fixed;left:50%;top:50%;z-index:60;transform:translate(-50%,-50%);width:200px;height:200px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;text-align:center;color:#fff;border:.5px solid rgba(255,255,255,.32);background:linear-gradient(180deg,rgba(255,255,255,.2),rgba(255,255,255,.05) 55%,rgba(255,255,255,.09));box-shadow:inset 0 1px 1px rgba(255,255,255,.55),0 14px 40px rgba(0,0,0,.45);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);animation:waitin .35s ease-out}#wait::before{content:"";position:absolute;inset:-1px;border-radius:50%;padding:1.5px;background:conic-gradient(from var(--ca),transparent 0 62%,rgba(224,36,43,.25) 72%,#e0242b 86%,transparent 100%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:cmgspin 3s linear infinite;pointer-events:none}@keyframes waitin{from{opacity:0;transform:translate(-50%,-50%) scale(.9)}}#wait .eye{width:50px;height:50px;border-width:5px;margin-bottom:10px}#wait p{color:#eee;font-size:12px}#wait .sub{font-size:10px;color:rgba(255,255,255,.6);max-width:150px}[data-theme=light] #wait{color:#141414;border-color:rgba(0,0,0,.15);background:linear-gradient(180deg,rgba(255,255,255,.75),rgba(255,255,255,.5));box-shadow:inset 0 1px 1px #fff,0 14px 40px rgba(0,0,0,.18)}[data-theme=light] #wait .sub{color:#777}#wait[hidden]{display:none}
+#wait .eye{position:relative;width:58px;height:58px;border:6px solid #fff;border-radius:50%;box-sizing:border-box;margin-bottom:14px;animation:eyeblink 4.2s infinite}
+#wait .eye i{position:absolute;left:50%;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:#fff;box-shadow:0 0 8px #fff;animation:eyelook 3.6s cubic-bezier(.6,0,.3,1) infinite,eyecol 2.4s ease-in-out infinite}
+#wait p{margin:0;font-size:12.5px;color:#ccc}#wait .sub{font-size:11px;color:var(--mute)}
+@keyframes eyelook{0%,12%{transform:translate(0,0)}20%,34%{transform:translate(-9px,-4px)}42%,54%{transform:translate(9px,-5px)}62%,72%{transform:translate(6px,7px)}80%,90%{transform:translate(-7px,6px)}100%{transform:translate(0,0)}}
+@keyframes eyecol{0%,100%{background:#fff;box-shadow:0 0 8px #fff}50%{background:#e0242b;box-shadow:0 0 10px rgba(224,36,43,.9)}}
+@keyframes eyeblink{0%,46%,52%,100%{transform:scaleY(1)}49%{transform:scaleY(.12)}}
+[data-theme=light] #wait .eye{border-color:#141414}[data-theme=light] #wait .eye i{background:#141414;box-shadow:none}[data-theme=light] #wait p{color:#555}
+@media (prefers-reduced-motion:reduce){#wait .eye,#wait .eye i{animation:none}}</style>
 <main id="gal" class="masonry"></main>
 <div id="feed" hidden></div>
 <button id="cl" hidden>collect list <b id="cln">0</b></button>
@@ -754,7 +765,7 @@ async function fetchPage(){
   return j;
 }
 async function load(){
-  if (S.loading) return; S.loading=true; $('#go').disabled=true; $('#more').hidden=true;
+  if (S.loading) return; S.loading=true; $('#go').disabled=true; $('#more').hidden=true; $('#wait').hidden=!!S.items.length;
   try{
     do{
       const j = await fetchPage();
@@ -763,13 +774,13 @@ async function load(){
       if (j.total) S.total=j.total; if (j.t && !S.ft) S.ft=j.t;
       if (j.more==='pending') S.morePending=true;
       const ids = new Set(S.items.map(x=>x.id));
-      (j.items||[]).forEach(x=>{ if(!ids.has(x.id)) S.items.push(enrich(x)); }); tidy();
+      (j.items||[]).forEach(x=>{ if(!ids.has(x.id)) S.items.push(enrich(x)); }); tidy(); if(S.items.length) $('#wait').hidden=true;
       S.next = j.next||null; S.pages++;
       $('#prog').style.width = S.next ? Math.min(95, S.pages/PAGE_CAP*100)+'%' : '100%';
       score(S.items); drawChips(); render();
     } while (S.next && S.pages < PAGE_CAP);
   }catch(e){ $('#err').textContent = e.message; }
-  S.loading=false; $('#go').disabled=false; $('#more').hidden = !S.next;
+  S.loading=false; $('#go').disabled=false; $('#more').hidden = !S.next; $('#wait').hidden=true;
   render();
   if (S.morePending) pollMore();
   setTimeout(()=>{ if(!S.next) $('#prog').style.width='0'; }, 800);
