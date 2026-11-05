@@ -47,7 +47,6 @@ form input::placeholder{color:#666}
 .btn:hover{background:linear-gradient(180deg,rgba(200,60,64,.7),rgba(150,30,36,.55) 60%,rgba(200,60,64,.6))}
 .btn:active{transform:scale(.94)}.btn:disabled{opacity:.45;cursor:wait}
 #err{min-height:14px;color:#ff7b7b;margin-top:-6px}
-#how{margin-top:-6px;opacity:.75}#how:empty,#how.gone{display:none}
 .fields{display:grid;grid-template-columns:1.3fr 1fr;gap:10px}
 .cols{display:flex;flex-direction:column;gap:14px}.lc{display:contents}.fields{order:0}#art{order:1}#out{order:2}.outrow{order:3}
 .f{display:flex;flex-direction:column;gap:5px;min-width:0}.f.w{grid-column:1/-1}
@@ -148,9 +147,8 @@ requestAnimationFrame(frame);})();</script>
 <div class="top"><a href="/">shill<span>sc<b class="so" aria-hidden="true"></b><i class="sr">o</i>pe</span></a><span class="mono">beta</span></div>
 <main>
 <section id="gen">
-  <div><h1>cm <span>gen</span></h1><p class="sub mono">paste your piece. get your shill reply.</p></div>
+  <div><h1>cm <span>gen</span></h1><p class="sub mono">drop your art link. get a ready-to-post shill reply.</p></div>
   <form id="f" autocomplete="off"><input id="u" placeholder="superrare · transient · objkt · manifold link" inputmode="url" spellcheck="false" aria-label="art link"><button class="btn" id="go">gen</button></form>
-  <p class="mono hint" id="how">just the link is enough. we fill in the rest, you can edit anything before you copy.</p>
   <p id="err" class="mono"></p>
   <div class="cols"><div class="lc">
   <div class="fields">
@@ -204,7 +202,7 @@ F.forEach(k=>$('#'+k).addEventListener('input',compose));
 $('#f').onsubmit=async e=>{ e.preventDefault(); const url=$('#u').value.trim(); $('#err').textContent='';
   let okSite=false; try{ const h=new URL(url); okSite=/^https?:$/.test(h.protocol)&&/^(?:www\.)?(?:superrare\.com|transient\.xyz|objkt\.com|(?:[\w-]+\.)*manifold\.xyz)$/i.test(h.hostname); }catch(_){}
   if(!okSite){ $('#err').textContent='only superrare, transient, objkt or manifold links'; return; }
-  $('#go').disabled=true; $('#go').textContent='…'; $('#how').classList.add('gone');
+  $('#go').disabled=true; $('#go').textContent='…';
   try{ const j=await (await fetch(A+'/api/gen?url='+encodeURIComponent(url))).json();
     if(j.error) $('#err').textContent=j.error;
     $('#title').value=j.title||''; $('#coll').value=j.collection||''; $('#price').value=j.price||''; $('#link').value=j.link||url; $('#desc').value=(()=>{ let d=(j.desc||'').split(/\n\s*\n/).map(x=>x.trim()).filter(x=>x&&x!==j.title)[0]||''; return d.length>220?d.slice(0,217).replace(/\s+\S*$/,'')+'…':d; })();
