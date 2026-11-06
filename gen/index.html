@@ -107,7 +107,7 @@ a.tipl{cursor:pointer}#gfoot{text-align:center;color:var(--mute);font:400 11.5px
 <script>window.SSB=/workers\.dev$/.test(location.hostname)?'':'https://shillscope.amiraphist.workers.dev';</script>
 <script>/* background 2: tracking lines — pointer leaves a trail of red tracking boxes joined by thin lines, with depth */
 (function(){var c=document.getElementById('trk'),x=c.getContext('2d'),W,H,D,N=[],last=null,idle=-1e4,t0=performance.now(),mx=0,my=0;
-var K=1,RED='224,36,43',TAGS=['eth','tez','shill','drop','1/1','edition','NFT','mint','list','art','artist','collector','bid','collect','sold','gm'];
+var K=1,RED='224,36,43',TAGS=['eth','tez','shill','drop','1/1','edition','NFT','mint','list','art','artist','collector','bid','collect','sold','gm','wagmi'];
 function sz(){D=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;c.width=W*D;c.height=H*D;c.style.width=W+'px';c.style.height=H+'px';x.setTransform(D,0,0,D,0,0);K=W>=900?1.7:1;}
 sz();addEventListener('resize',sz);
 function add(px,py,auto){var z=Math.random()*.85+.15,nx=px+(Math.random()-.5)*30,ny=py+(Math.random()-.5)*30,M=75*K;   // hard minimum gap so boxes never overlap
