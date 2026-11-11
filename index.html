@@ -575,7 +575,7 @@ addEventListener('resize',pos);if(document.fonts&&document.fonts.ready)document.
     <button id="go">go</button>
   </form>
   <p id="err" class="mono"></p>
-<div id="wait" hidden><span class="eye"><i></i></span><p class="mono">reading the thread…</p><p class="mono sub">big threads take a few seconds</p></div>
+
   <div id="hot" hidden><p class="mono hl"><i class="dot"></i>art shill threads live now</p><div id="wheel"><div class="rows"></div></div></div>
 <div id="slab" role="group" aria-label="ETH and XTZ price"><i class="dot"></i>
   <div class="px" id="px-eth"><b>ETH</b><span class="v">—</span><span class="c mono"></span></div>
@@ -1258,5 +1258,6 @@ function open(){m.classList.add('on');b.classList.remove('pulse');try{localStora
 b.addEventListener('click',open);m.addEventListener('click',function(e){if(e.target===m||e.target.classList.contains('ic'))close();});addEventListener('keydown',function(e){if(e.key==='Escape')close();});
 try{if(!localStorage.getItem('ss:info')){b.classList.add('pulse');localStorage.setItem('ss:info','1');}}catch(e){}
 addEventListener('load',pos);addEventListener('resize',pos);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(pos);new MutationObserver(pos).observe(document.body,{attributes:true,attributeFilter:['class']});pos();})();</script>
+<div id="wait" hidden><span class="eye"><i></i></span><p class="mono">reading the thread…</p><p class="mono sub">big threads take a few seconds</p></div>
 </body>
 </html>
