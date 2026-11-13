@@ -88,6 +88,10 @@ footer{margin-top:22px;text-align:center;font-size:10.5px;color:#555}
 .stt{font-family:'JetBrains Mono',monospace;font-size:10.5px;padding:3px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.14);color:#cfcfcf;white-space:nowrap}
 .stt.ok{border-color:rgba(34,197,94,.5);color:#4ade80}
 .scroll{overflow-x:auto}
+.er{display:grid;grid-template-columns:70px minmax(0,1.4fr) minmax(0,1fr) 70px 70px;gap:10px;align-items:center;padding:10px 0;border-top:.5px solid rgba(255,255,255,.08);font-size:13px}
+.er.h{border-top:0;padding-top:0;color:var(--mute);font-size:11px}.er a{color:var(--fg);text-decoration:none}.er a:hover{color:var(--acc)}
+.er .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.er .s{color:var(--up);text-align:right;font-family:'JetBrains Mono',monospace}.er .p{text-align:right;font-family:'JetBrains Mono',monospace;color:var(--mute)}.er .d{color:var(--mute);font-size:12px}
+@media (max-width:600px){.er.h{display:none}.er{grid-template-columns:1fr auto;gap:4px 10px;padding:12px 0}.er .n{grid-column:1}.er .s{grid-column:2;grid-row:1}.er .b{grid-column:1;font-size:12px;color:var(--mute)}.er .p{grid-column:2;grid-row:2}.er .d{grid-column:1/3;font-size:11px}}
 </style>
 </head>
 <body>
@@ -145,6 +149,24 @@ function sqBody(label){var q=st.sq;if(!q)return '<section><p class="mute">loadin
   '<section><h2>pieces <span>'+fmt(on.length)+' got a screen</span></h2>'+pt+'</section>'+
   '<section><h2>tag log <span>every #shillscope post seen</span></h2>'+lt+'</section>'+
   '<footer>private · shill square days in new york time · clicks capped at 250/day'+(q.days.some(function(x){return x.cap})?' (cap hit)':'')+'</footer>';}
+var REF=(function(){try{var q=new URLSearchParams(location.search).get('ref');if(q&&/^tz[1-3]\w{33}$/.test(q))return q}catch(e){}return 'tz1hoapdBuxGVbq27HjGNktqkb82SYuoPB45'})();
+function tez(m){return (Math.round((m||0)/1e4)/100).toLocaleString('en-US',{maximumFractionDigits:2})}
+function fetchEarn(){if(st.earnL)return;st.earnL=1;
+ var q='{listing_sale(where:{referrers:{_has_key:"'+REF+'"}},order_by:{timestamp:desc},limit:300){timestamp ophash price buyer_address buyer{alias twitter} token{name fa_contract token_id}}}';
+ Promise.all([fetch('https://data.objkt.com/v3/graphql',{method:'POST',headers:{'content-type':'text/plain'},body:JSON.stringify({query:q})}).then(function(r){return r.json()}),
+  fetch('https://api.tzkt.io/v1/operations/transactions?target='+REF+'&sender.like=KT1*&limit=1000&select=hash,amount').then(function(r){return r.json()}).catch(function(){return[]})])
+ .then(function(a){var S=(a[0]&&a[0].data&&a[0].data.listing_sale)||[],M={};(a[1]||[]).forEach(function(o){M[o.hash]=(M[o.hash]||0)+(o.amount||0)});
+  var seen={};st.earn=S.map(function(x){var e=seen[x.ophash]?0:(M[x.ophash]||0);seen[x.ophash]=1;x.earn=e;return x});st.earnL=0;if(st.tab==='earn')render()})
+ .catch(function(){st.earn='err';st.earnL=0;if(st.tab==='earn')render()});}
+function earnHTML(){var E=st.earn;if(!E){fetchEarn();return '<section><h2>objkt referrals <span>loading…</span></h2></section>'}
+ if(E==='err')return '<section><h2>objkt referrals</h2><p class="mute">couldn\'t reach objkt · try again later</p></section>';
+ var tot=E.reduce(function(s,x){return s+x.earn},0),vol=E.reduce(function(s,x){return s+(+x.price||0)},0),day=new Date(Date.now()-30*864e5).toISOString(),m30=E.filter(function(x){return x.timestamp>=day}).reduce(function(s,x){return s+x.earn},0);
+ var head='<section><h2>objkt referrals <span>'+esc(REF.slice(0,6)+'…'+REF.slice(-4))+'</span></h2><div class="tiles">'+tile(tez(tot)+' ꜩ','earned',1)+tile(fmt(E.length),'referred sales')+tile(tez(m30)+' ꜩ','last 30 days')+'</div></section>';
+ var rows=E.length?'<div class="er h"><span>date</span><span>artwork</span><span>buyer</span><span style="text-align:right">price</span><span style="text-align:right">yours</span></div>'+E.map(function(x){var t=x.token||{},b=x.buyer||{},who=b.alias||((x.buyer_address||'').slice(0,6)+'…'+(x.buyer_address||'').slice(-4)),tw=b.twitter?String(b.twitter).replace(/^https?:\/\/(www\.)?(x|twitter)\.com\//,''):'';
+  var d=new Date(x.timestamp),ds=isNaN(d)?String(x.timestamp).slice(0,10):d.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' '+d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  return '<div class="er"><span class="d">'+esc(ds)+'</span><a class="n" href="https://objkt.com/tokens/'+esc(t.fa_contract)+'/'+esc(t.token_id)+'" target="_blank" rel="noopener">'+esc(t.name||'untitled')+'</a><span class="b n">'+(tw?'<a href="https://x.com/'+esc(tw)+'" target="_blank" rel="noopener">@'+esc(tw)+'</a>':'<a href="https://objkt.com/profile/'+esc(x.buyer_address)+'" target="_blank" rel="noopener">'+esc(who)+'</a>')+'</span><span class="p">'+tez(x.price)+' ꜩ</span><span class="s">'+(x.earn?'+'+tez(x.earn)+' ꜩ':'–')+'</span></div>'}).join(''):'<p class="mute">no referred sales yet · every objkt collect click from the gallery now carries your code</p>';
+ return head+'<section><h2>sales <span>volume '+tez(vol)+' ꜩ</span></h2>'+rows+'</section><footer>private · live from objkt + tzkt · paid on-chain to your tip wallet</footer>'}
+
 function render(){
  var j=st.data,T=j.tot,P=j.prev,r=String(j.r);
  var pv=function(k){return P?P[k]:null};
@@ -162,10 +184,10 @@ function render(){
  var ap='';if(j.apify){var a=j.apify,accs=(a.acc&&a.acc.length)?a.acc:[{name:'main',used:a.used,max:a.max,reset:a.reset}];
   ap='<section><h2>apify <span>reply scans today '+fmt(a.runs)+' / '+fmt(a.cap)+(accs.length>1?' · using '+(a.use===2?'backup':'main'):'')+'</span></h2>'+accs.map(function(c,k){var pct=c.max?Math.min(100,Math.round((c.used||0)/c.max*100)):0,on=accs.length>1&&((a.use===2)===(k===1));
    return (accs.length>1?'<p class="mute" style="margin:'+(k?'14px':'0')+' 0 6px">'+c.name+(on?' · active':'')+'</p>':'')+(c.max!=null?'<div class="ap"><div><b>$'+Number(c.used||0).toFixed(2)+'</b><small>used this month</small></div><div><b>$'+Math.max(0,c.max-(c.used||0)).toFixed(2)+'</b><small>left of $'+Number(c.max).toFixed(2)+(c.reset?' · resets '+short(String(c.reset).slice(0,10)):'')+'</small></div></div><div class="meter"><i style="width:'+pct+'%"></i></div>':'<p class="mute">credit info unavailable</p>')}).join('')+'</section>'}
- var tabs='<div class="tabs">'+[['main','main page'],['sq','shill square'],['gen','cm gen']].map(function(x){return '<button class="tab'+(st.tab===x[0]?' on':'')+'" data-t="'+x[0]+'">'+x[1]+'</button>'}).join('')+'</div>';
+ var tabs='<div class="tabs">'+[['main','main page'],['sq','shill square'],['gen','cm gen'],['earn','objkt ref']].map(function(x){return '<button class="tab'+(st.tab===x[0]?' on':'')+'" data-t="'+x[0]+'">'+x[1]+'</button>'}).join('')+'</div>';
  var gmx=Math.max.apply(null,[1].concat(bars.map(function(x){return x.go||0})));
  var gchart=bars.map(function(x){return '<div class="b'+(x.d>=selA&&x.d<=selB?' sel':'')+'" data-d="'+x.d+'"><i style="height:'+Math.round((x.go||0)/gmx*100)+'%"><em style="height:'+(x.go?Math.min(100,Math.round((x.gm||0)/x.go*100)):0)+'%"></em></i><span>'+fmt(x.go)+'</span><small>'+short(x.d)+'</small></div>'}).join('');
- var body=st.tab==='gen'?gen+'<section><h2>daily <span>tap a day</span></h2><div class="chart">'+(gchart||'<p class="mute">nothing yet</p>')+'</div><div class="legend"><span><i></i>opens</span><span><i class="r"></i>pieces loaded (capped at opens)</span></div></section><footer>private · days in utc</footer>'
+ var body=st.tab==='earn'?earnHTML():st.tab==='gen'?gen+'<section><h2>daily <span>tap a day</span></h2><div class="chart">'+(gchart||'<p class="mute">nothing yet</p>')+'</div><div class="legend"><span><i></i>opens</span><span><i class="r"></i>pieces loaded (capped at opens)</span></div></section><footer>private · days in utc</footer>'
   :st.tab==='sq'?sqBody(label):
   '<section><h2>'+esc(label)+' <span>'+esc(cmp)+'</span></h2><div class="tiles">'+tile(fmt(T.v),'visits',1,delta(T.v,pv('v')))+tile(fmt(T.g),'galleries',0,delta(T.g,pv('g')))+tile(T.v?(T.g/T.v).toFixed(1):'–','galleries per visit')+'</div></section>'+
   '<section><h2>daily <span>tap a day</span></h2><div class="chart">'+(chart||'<p class="mute">nothing yet</p>')+'</div><div class="legend"><span><i></i>visits</span><span><i class="r"></i>galleries (capped at visits)</span></div></section>'+ap+
