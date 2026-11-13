@@ -1259,5 +1259,8 @@ b.addEventListener('click',open);m.addEventListener('click',function(e){if(e.tar
 try{if(!localStorage.getItem('ss:info')){b.classList.add('pulse');localStorage.setItem('ss:info','1');}}catch(e){}
 addEventListener('load',pos);addEventListener('resize',pos);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(pos);new MutationObserver(pos).observe(document.body,{attributes:true,attributeFilter:['class']});pos();})();</script>
 <div id="wait" hidden><span class="eye"><i></i></span><p class="mono">reading the thread…</p><p class="mono sub">big threads take a few seconds</p></div>
-</body>
+<script>/* objkt fee sharing: add referrer to objkt links at click time */
+(function(){var R='tz1hoapdBuxGVbq27HjGNktqkb82SYuoPB45';
+function fx(e){var a=e.target&&e.target.closest&&e.target.closest('a[href]');if(!a)return;try{var u=new URL(a.href);if(!/(^|\.)objkt\.com$/.test(u.hostname))return;if(!u.searchParams.get('ref')){u.searchParams.set('ref',R);a.href=u.toString();}}catch(_){}}
+['click','auxclick','contextmenu','touchstart'].forEach(function(t){document.addEventListener(t,fx,{capture:true,passive:true});});})();</script></body>
 </html>
