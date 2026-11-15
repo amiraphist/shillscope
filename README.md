@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://shillscope.run.place"><img src=".github/readme/home.jpg" alt="shillscope" width="100%"></a>
+  <a href="https://shillscope.art"><img src=".github/readme/home.jpg" alt="shillscope" width="100%"></a>
 </p>
 
 <h1 align="center">shillscope</h1>
@@ -7,7 +7,7 @@
 <p align="center"><b>paste a shill thread. see every piece.</b></p>
 
 <p align="center">
-  <a href="https://shillscope.run.place"><img src="https://img.shields.io/badge/live-shillscope.run.place-e0242b?style=flat-square&labelColor=000" alt="live"></a>
+  <a href="https://shillscope.art"><img src="https://img.shields.io/badge/live-shillscope.art-e0242b?style=flat-square&labelColor=000" alt="live"></a>
   <img src="https://img.shields.io/badge/price-free-111?style=flat-square&labelColor=000" alt="free">
   <a href="https://x.com/amiraphist"><img src="https://img.shields.io/badge/by-@amiraphist-111?style=flat-square&logo=x&labelColor=000" alt="by @amiraphist"></a>
 </p>
@@ -24,7 +24,7 @@ shillscope is the pause in that stream. every image reply becomes a card you can
 
 **1 · copy** a collector's shill thread link on x
 
-**2 · paste** it on [shillscope.run.place](https://shillscope.run.place)
+**2 · paste** it on [shillscope.art](https://shillscope.art)
 
 **3 · see** every piece as a card. sort it, filter it, collect it.
 
