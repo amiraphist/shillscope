@@ -468,7 +468,7 @@ on();document.addEventListener('visibilitychange',function(){if(document.hidden)
     <div id="gal"></div>
   </section>
 </main>
-<footer>shillscope lab · works tagged #200tez on objkt · every link supports the curator</footer>
+<footer>shillscope lab · works tagged #200tez on objkt since nov 10 · every link supports the curator</footer>
 <script>window.__HT='<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.8 4.5c2.1 0 3.6 1.1 5.2 3 1.6-1.9 3.1-3 5.2-3 3.8 0 5.9 3.9 4.4 7.3C19.5 16.4 12 21 12 21z" fill="currentColor"/></svg>';</script>
 <script>
 (function(){
@@ -546,7 +546,7 @@ function up(e){var g=D.drag;if(!g)return;D.drag=null;dr.classList.remove('drag')
 dr.addEventListener('pointerup',up);dr.addEventListener('pointercancel',function(){var g=D.drag;D.drag=null;dr.classList.remove('drag');D.tg=g?Math.round(g.a):Math.round(D.ang)});
 addEventListener('resize',function(){geo()});
 chips('rr',RAR,'r');chips('rf',FMT,'f');chips('rs',SRT,'s');
-var Q='query($o:Int!){token(where:{tags:{tag:{name:{_eq:"200tez"}}}},order_by:{timestamp:desc},limit:100,offset:$o){fa_contract token_id name mime supply timestamp display_uri lowest_ask creators{creator_address holder{alias twitter}}}}';
+var Q='query($o:Int!){token(where:{tags:{tag:{name:{_eq:"200tez"}}},timestamp:{_gte:"2026-11-10T00:00:00Z"}},order_by:{timestamp:desc},limit:100,offset:$o){fa_contract token_id name mime supply timestamp display_uri lowest_ask creators{creator_address holder{alias twitter}}}}';
 function cid(u){return (u&&u.indexOf('ipfs://')===0)?u.slice(7).split('/')[0]:''}
 function page(o,acc){return fetch('https://data.objkt.com/v3/graphql',{method:'POST',headers:{'content-type':'text/plain'},body:JSON.stringify({query:Q,variables:{o:o}})}).then(function(r){return r.json()}).then(function(j){var t=(j&&j.data&&j.data.token)||[];t.forEach(function(x){var c=(x.creators&&x.creators[0])||{},h=c.holder||{},m=(h.twitter||'').match(/(?:x|twitter)\.com\/([A-Za-z0-9_]+)/);acc.push({fa:x.fa_contract,id:x.token_id,n:x.name||'untitled',mime:x.mime||'',ed:x.supply||0,ts:x.timestamp,p:x.lowest_ask==null?null:x.lowest_ask/1e6,a:c.creator_address||'',al:h.alias||'',tw:m?m[1]:'',d:cid(x.display_uri)})});return (t.length===100&&o<500)?page(o+100,acc):acc})}
 page(0,[]).then(function(items){var j={items:items};
