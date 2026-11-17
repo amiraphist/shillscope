@@ -428,6 +428,21 @@ header button.post{margin-left:0!important}
 @media (max-width:600px){#ig{padding:20px 18px 16px;border-radius:18px}#ig h2{font-size:22px}#ig li{font-size:13px}}
 </style><script>addEventListener('DOMContentLoaded',function(){var m=document.getElementById('im'),b=document.getElementById('inf');function c(){m.classList.remove('on');m.setAttribute('aria-hidden','true')}b.onclick=function(){m.classList.add('on');m.setAttribute('aria-hidden','false')};m.addEventListener('click',function(e){if(e.target===m||e.target.classList.contains('x'))c()});addEventListener('keydown',function(e){if(e.key==='Escape')c()})})</script>
 <style>.txt{min-height:3em}.info{flex:1}.info .buy{margin-top:auto}</style>
+<script>/* #200tez stats: anonymous counters, batched (no cookies, no wallet data except the op hash after a signed collect) */
+(function(){var A='https://shillscope.amiraphist.workers.dev';if(/lab/.test(location.hostname))return;var C={},T,sid;
+try{sid=sessionStorage.getItem('ss_t2')}catch(e){}if(!sid){sid=(Math.random().toString(36)+'0000000000').slice(2,12);try{sessionStorage.setItem('ss_t2',sid)}catch(e){}C.v=1}
+function snd(b){try{if(navigator.sendBeacon&&navigator.sendBeacon(A+'/api/t2',new Blob([b],{type:'text/plain'})))return}catch(e){}fetch(A+'/api/t2',{method:'POST',body:b,keepalive:true,mode:'no-cors'}).catch(function(){})}
+function fl(){if(!Object.keys(C).length)return;var b=JSON.stringify({c:C});C={};snd(b)}
+function t(e){C[e]=(C[e]||0)+1;clearTimeout(T);T=setTimeout(fl,15000)}
+window.T2s=function(o){if(o&&o.op)snd(JSON.stringify({s:o}))};
+setTimeout(fl,2500);addEventListener('pagehide',fl);
+addEventListener('click',function(e){var g=e.target.closest&&e.target.closest('.fav[data-k],#cl,#dbuy,#pgen,#pcp,#pci,#pdl');if(!g)return;
+ if(g.classList.contains('fav')){if(!g.classList.contains('on'))t('h');return}
+ if(g.disabled)return;t({cl:'ol',dbuy:'ca',pgen:'sg',pcp:'sc',pci:'si',pdl:'sd'}[g.id])},true);
+var ps=function(b){var u=A+'/api/live?id='+sid+'&p=t2'+(b?'&bye=1':'');try{if(navigator.sendBeacon&&navigator.sendBeacon(u))return}catch(e){}fetch(u,{method:'POST',keepalive:true,mode:'no-cors'}).catch(function(){})};
+var I;function on(){if(document.hidden)return;ps();clearInterval(I);I=setInterval(function(){if(!document.hidden)ps()},30000)}
+on();document.addEventListener('visibilitychange',function(){if(document.hidden){clearInterval(I);ps(1);fl()}else on()});
+})();</script>
 </head>
 <body>
 <div id="bgw"><div id="mesh"></div></div>
@@ -655,7 +670,7 @@ $('dbuy').onclick=async function(){var b=this,ks=list().filter(function(k){retur
     if(!ops.length){st('none of these can be collected right now','err');return}
     b.textContent='confirm in your wallet\u2026';
     var r=await BX.requestOperation({operationDetails:ops.map(function(x){return x.o})});
-    var h=r&&(r.transactionHash||r.opHash);
+    var h=r&&(r.transactionHash||r.opHash);window.T2s&&T2s({op:h,n:ops.length,it:ops.map(function(x){return x.k})});
     ops.forEach(function(x){delete F[x.k];document.querySelectorAll('.fav[data-k="'+x.k+'"]').forEach(function(z){z.classList.remove('on')})});save();draw();
     st('collected '+ops.length+' \u00b7 '+tz(sum)+(h?' \u00b7 <a href="https://tzkt.io/'+esc(h)+'" target="_blank" rel="noopener">view on tzkt</a>':'')+(skip.length?' \u00b7 '+skip.length+' skipped (sold or not listed)':''),'ok');
   }catch(e){var m=(e&&(e.description||e.message||e.errorType))||'';st(/abort|reject|cancel/i.test(m)?'cancelled in wallet':'didn\u2019t go through'+(m?': '+esc(String(m).slice(0,80)):''),'err')}

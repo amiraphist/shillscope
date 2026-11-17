@@ -127,8 +127,8 @@ function load(){
  if(st.data)app.classList.add('load');
  var q='?r='+st.r+(st.d?'&d='+st.d:'');
  var H={headers:{authorization:'Bearer '+t}},G=function(u){return fetch(API+u,H).then(function(r){if(r.status===401){try{localStorage.removeItem(TK)}catch(e){}login();return null}return r.json()})};
- Promise.all([G('/api/dash/data'+q),st.tab==='sq'?G('/api/dash/sq'+q):Promise.resolve(null)])
- .then(function(a){app.classList.remove('load');var j=a[0];if(!j)return;st.data=j;st.sq=a[1];st.d=j.end;render()})
+ Promise.all([G('/api/dash/data'+q),st.tab==='sq'?G('/api/dash/sq'+q):st.tab==='t2'?G('/api/dash/t2'+q):Promise.resolve(null)])
+ .then(function(a){app.classList.remove('load');var j=a[0];if(!j)return;st.data=j;if(st.tab==='t2')st.t2=a[1];else st.sq=a[1];st.d=j.end;render()})
  .catch(function(){app.classList.remove('load');if(!st.data)app.innerHTML='<p class="mute" style="text-align:center;margin-top:30vh">network error · pull to refresh</p>'});
 }
 function delta(a,b){if(b==null)return '';if(!b)return a?'<i class="u">new</i>':'<i class="z">±0</i>';var p=Math.round((a-b)/b*100);return '<i class="'+(p>0?'u':p<0?'n':'z')+'">'+(p>0?'+':'')+p+'%</i>'}
@@ -169,6 +169,17 @@ function earnHTML(){var E=st.earn;if(!E){fetchEarn();return '<section><h2>objkt 
   return '<div class="er"><span class="d">'+esc(ds)+'</span><a class="n" href="https://objkt.com/tokens/'+esc(t.fa_contract)+'/'+esc(t.token_id)+'" target="_blank" rel="noopener">'+esc(t.name||'untitled')+'</a><span class="b n">'+(tw?'<a href="https://x.com/'+esc(tw)+'" target="_blank" rel="noopener">@'+esc(tw)+'</a>':'<a href="https://objkt.com/profile/'+esc(x.buyer_address)+'" target="_blank" rel="noopener">'+esc(who)+'</a>')+'</span><span class="p">'+tez(x.price)+' ꜩ</span><span class="s">'+(x.earn?'+'+tez(x.earn)+' ꜩ':'–')+'</span></div>'}).join(''):'<p class="mute">no referred sales yet · every objkt collect click from the gallery now carries your code</p>';
  return head+'<section><h2>sales <span>volume '+tez(vol)+' ꜩ</span></h2>'+rows+'</section><footer>private · live from objkt + tzkt · paid on-chain to your tip wallet</footer>'}
 
+function t2Body(label){var q=st.t2;if(!q)return '<section><p class="mute">loading…</p></section>';var T=q.tot,E=q.ev,L=q.logs||[];
+ var ok=L.filter(function(x){return x.ok===1}),pcs=ok.reduce(function(s,x){return s+(x.n||0)},0),amt=ok.reduce(function(s,x){return s+(x.amt||0)},0);
+ var dmx=Math.max.apply(null,[1].concat(q.days.map(function(x){return x.v||0})));
+ var ch=q.days.slice(-14).map(function(x){return '<div class="b sel"><i style="height:'+Math.round((x.v||0)/dmx*100)+'%"><em style="height:'+(x.v?Math.min(100,Math.round((x.h||0)/x.v*100)):0)+'%"></em></i><span>'+fmt(x.v)+'</span><small>'+short(x.d)+'</small></div>'}).join('');
+ var lt=L.length?'<div class="scroll"><table class="tbl"><tr><th>signed at (new york)</th><th class="n">pieces</th><th class="n">tez</th><th>buyer</th><th>chain</th></tr>'+L.map(function(x){var by=x.by||'';return '<tr><td class="tm">'+esc(nyt(x.ts))+'</td><td class="n">'+fmt(x.n)+'</td><td class="n">'+(x.ok===1?tez(x.amt):'–')+'</td><td>'+(by?'<a href="https://objkt.com/profile/'+esc(by)+'" target="_blank" rel="noopener">'+esc(by.slice(0,6)+'…'+by.slice(-4))+'</a>':'–')+'</td><td><a href="https://tzkt.io/'+esc(x.op)+'" target="_blank" rel="noopener"><span class="stt'+(x.ok===1?' ok':'')+'">'+(x.ok===1?'confirmed':x.ok===-1?'failed':'pending')+'</span></a></td></tr>'}).join('')+'</table></div>':'<p class="mute">no collect-all signatures yet</p>';
+ var ev=E?'<section><h2>the event <span>live from objkt</span></h2><div class="tiles">'+tile(fmt(E.event.w),'works since nov 17',1)+tile(fmt(E.event.a),'artists since nov 17')+tile(fmt(E.round.w),'works since nov 10')+tile(fmt(E.round.a),'artists since nov 10')+tile(fmt(E.day.w),'works today')+'</div></section>':'';
+ return '<section><h2>#200tez · '+esc(label)+'</h2><div class="tiles">'+tile(fmt(T.v),'visits',1)+tile(fmt(T.h),'hearts')+tile(fmt(T.ol),'list opens')+tile(fmt(T.ca),'collect all clicks')+tile(fmt(ok.length),'signed collects',1)+tile(fmt(pcs),'pieces collected')+tile(tez(amt)+' ꜩ','tez collected')+tile(fmt(T.sg),'shill gens')+tile(fmt(T.sc),'post text copied')+tile(fmt((T.si||0)+(T.sd||0)),'image copied / saved')+'</div></section>'+
+  '<section><h2>daily <span>visits · red = hearts</span></h2><div class="chart">'+(ch||'<p class="mute">nothing yet</p>')+'</div></section>'+ev+
+  '<section><h2>collects <span>every signature, checked on tzkt</span></h2>'+lt+'</section>'+
+  '<div class="grid"><section><h2>countries</h2><ul>'+list(T.c,function(k){return flag(k)+' '+esc(k)},10)+'</ul></section><section><h2>device</h2><ul>'+list(T.dev)+'</ul></section></div>'+
+  '<footer>private · days in new york time · tez counted only after tzkt confirms'+(q.days.some(function(x){return x.cap})?' · write cap hit':'')+'</footer>';}
 function render(){
  var j=st.data,T=j.tot,P=j.prev,r=String(j.r);
  var pv=function(k){return P?P[k]:null};
@@ -186,11 +197,11 @@ function render(){
  var ap='';if(j.apify){var a=j.apify,accs=(a.acc&&a.acc.length)?a.acc:[{name:'main',used:a.used,max:a.max,reset:a.reset}];
   ap='<section><h2>apify <span>reply scans today '+fmt(a.runs)+' / '+fmt(a.cap)+(accs.length>1?' · using '+(a.use===2?'backup':'main'):'')+'</span></h2>'+accs.map(function(c,k){var pct=c.max?Math.min(100,Math.round((c.used||0)/c.max*100)):0,on=accs.length>1&&((a.use===2)===(k===1));
    return (accs.length>1?'<p class="mute" style="margin:'+(k?'14px':'0')+' 0 6px">'+c.name+(on?' · active':'')+'</p>':'')+(c.max!=null?'<div class="ap"><div><b>$'+Number(c.used||0).toFixed(2)+'</b><small>used this month</small></div><div><b>$'+Math.max(0,c.max-(c.used||0)).toFixed(2)+'</b><small>left of $'+Number(c.max).toFixed(2)+(c.reset?' · resets '+short(String(c.reset).slice(0,10)):'')+'</small></div></div><div class="meter"><i style="width:'+pct+'%"></i></div>':'<p class="mute">credit info unavailable</p>')}).join('')+'</section>'}
- var tabs='<div class="tbar"><div class="tabs">'+[['main','main page'],['sq','shill square'],['gen','cm gen'],['earn','objkt ref']].map(function(x){return '<button class="tab'+(st.tab===x[0]?' on':'')+'" data-t="'+x[0]+'">'+x[1]+'</button>'}).join('')+'</div><div class="lv" data-lv></div><div class="lv lvm" data-lv></div></div>';
+ var tabs='<div class="tbar"><div class="tabs">'+[['main','main page'],['sq','shill square'],['gen','cm gen'],['earn','objkt ref'],['t2','#200tez']].map(function(x){return '<button class="tab'+(st.tab===x[0]?' on':'')+'" data-t="'+x[0]+'">'+x[1]+'</button>'}).join('')+'</div><div class="lv" data-lv></div><div class="lv lvm" data-lv></div></div>';
  var gmx=Math.max.apply(null,[1].concat(bars.map(function(x){return x.go||0})));
  var gchart=bars.map(function(x){return '<div class="b'+(x.d>=selA&&x.d<=selB?' sel':'')+'" data-d="'+x.d+'"><i style="height:'+Math.round((x.go||0)/gmx*100)+'%"><em style="height:'+(x.go?Math.min(100,Math.round((x.gm||0)/x.go*100)):0)+'%"></em></i><span>'+fmt(x.go)+'</span><small>'+short(x.d)+'</small></div>'}).join('');
  var body=st.tab==='earn'?earnHTML():st.tab==='gen'?gen+'<section><h2>daily <span>tap a day</span></h2><div class="chart">'+(gchart||'<p class="mute">nothing yet</p>')+'</div><div class="legend"><span><i></i>opens</span><span><i class="r"></i>pieces loaded (capped at opens)</span></div></section><footer>private · days in utc</footer>'
-  :st.tab==='sq'?sqBody(label):
+  :st.tab==='sq'?sqBody(label):st.tab==='t2'?t2Body(label):
   '<section><h2>'+esc(label)+' <span>'+esc(cmp)+'</span></h2><div class="tiles">'+tile(fmt(T.v),'visits',1,delta(T.v,pv('v')))+tile(fmt(T.g),'galleries',0,delta(T.g,pv('g')))+tile(T.v?(T.g/T.v).toFixed(1):'–','galleries per visit')+'</div></section>'+
   '<section><h2>daily <span>tap a day</span></h2><div class="chart">'+(chart||'<p class="mute">nothing yet</p>')+'</div><div class="legend"><span><i></i>visits</span><span><i class="r"></i>galleries (capped at visits)</span></div></section>'+ap+
   '<div class="grid"><section><h2>from</h2><ul>'+list(T.ref)+'</ul></section><section><h2>countries</h2><ul>'+list(T.c,function(k){return flag(k)+' '+esc(k)},10)+'</ul></section><section><h2>device</h2><ul>'+list(T.dev)+'</ul></section><section><h2>system</h2><ul>'+list(T.os)+'</ul></section><section><h2>app / browser</h2><ul>'+list(T.br)+'</ul></section></div>'+
@@ -200,14 +211,14 @@ function render(){
  (navOn?'<div class="nav"><button id="pv"'+(j.start<=j.first?' disabled':'')+'>‹</button><span class="d">'+esc(label)+'</span><button id="nx"'+(j.end>=j.today?' disabled':'')+'>›</button></div>':'<div class="nav"><span class="d">since '+short(j.first)+'</span></div>')+'</div>'+
  body;
  lvPaint();document.getElementById('lo').onclick=logout;
- [].forEach.call(app.querySelectorAll('.tab'),function(b){b.onclick=function(){st.tab=b.getAttribute('data-t');try{localStorage.setItem('ssdtab',st.tab)}catch(e){}if(st.tab==='sq')load();else render()}});
+ [].forEach.call(app.querySelectorAll('.tab'),function(b){b.onclick=function(){st.tab=b.getAttribute('data-t');try{localStorage.setItem('ssdtab',st.tab)}catch(e){}if(st.tab==='sq'||st.tab==='t2')load();else render()}});
  [].forEach.call(app.querySelectorAll('.pill'),function(b){b.onclick=function(){st.r=b.getAttribute('data-r');if(st.r==='all')st.d=null;load()}});
  [].forEach.call(app.querySelectorAll('.b'),function(b){b.onclick=function(){st.r='1';st.d=b.getAttribute('data-d');load()}});
  var p=document.getElementById('pv'),x=document.getElementById('nx'),step=r==='1'?1:+r;
  if(p)p.onclick=function(){st.d=add(j.end,-step);load()};
  if(x)x.onclick=function(){var d=add(j.end,step);st.d=d>j.today?j.today:d;load()};
 }
-var LV=null,LVN=[['g','gallery'],['sq','shill square'],['gen','cm gen'],['lab','lab']];
+var LV=null,LVN=[['g','gallery'],['sq','shill square'],['gen','cm gen'],['t2','#200tez'],['lab','lab']];
 function lvHTML(){var by=LV?LV.by:{};return '<span><i></i><b>'+(LV?LV.total:'\u2013')+'</b> online</span>'+LVN.filter(function(x){return x[0]!=='lab'||by.lab}).map(function(x){return '<span>'+x[1]+' <b>'+(LV?(by[x[0]]||0):'\u2013')+'</b></span>'}).join('')}
 function lvPaint(){[].forEach.call(document.querySelectorAll('[data-lv]'),function(e){e.innerHTML=lvHTML()})}
 function lvLoad(){var t=tok();if(!t||document.hidden)return;fetch(API+'/api/dash/live',{headers:{authorization:'Bearer '+t}}).then(function(r){return r.ok?r.json():null}).then(function(j){if(j){LV=j;lvPaint()}}).catch(function(){})}
