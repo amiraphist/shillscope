@@ -494,7 +494,7 @@ function apply(){
   if(S.s==='lo')v.sort(function(a,b){return (a.p==null?1e9:a.p)-(b.p==null?1e9:b.p)});
   else if(S.s==='hi')v.sort(function(a,b){return (b.p==null?-1:b.p)-(a.p==null?-1:a.p)});
   S.view=v;S.story=v.slice(0,STORY);grid(v.slice(S.story.length));story();
-  $('#cnt').textContent=v.length+' work'+(v.length===1?'':'s')+' · '+S.story.length+' on the drum, '+Math.max(0,v.length-S.story.length)+' below';
+  $('#cnt').textContent=v.length+' work'+(v.length===1?'':'s')+' · '+S.story.length+' on the drum, '+Math.max(0,v.length-S.story.length)+' below · since nov 10';
 }
 function grid(v){var g=$('#gal');g.innerHTML='';
   if(!S.all.length){g.innerHTML='<div class="none">no works yet. be first: post with #200tez #shillscope</div>';return}
