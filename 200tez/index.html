@@ -444,7 +444,10 @@ var ps=function(b){var u=A+'/api/live?id='+sid+'&p=t2'+(b?'&bye=1':'');try{if(na
 var I;function on(){if(document.hidden)return;ps();clearInterval(I);I=setInterval(function(){if(!document.hidden)ps()},30000)}
 on();document.addEventListener('visibilitychange',function(){if(document.hidden){clearInterval(I);ps(1);fl()}else on()});
 })();</script>
-</head>
+<style>#rw .chip[data-v="ar"]{position:relative}
+#rw .chip[data-v="ar"]::before{content:"";position:absolute;inset:-1.5px;border-radius:999px;padding:1.5px;pointer-events:none;background:conic-gradient(from var(--ga),#fff,rgba(255,255,255,.12) 25%,#fff 50%,rgba(255,255,255,.12) 75%,#fff);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);animation:gaR 4s linear infinite}
+[data-theme=light] #rw .chip[data-v="ar"]::before{background:conic-gradient(from var(--ga),#141414,rgba(0,0,0,.1) 25%,#141414 50%,rgba(0,0,0,.1) 75%,#141414)}
+@media (prefers-reduced-motion:reduce){#rw .chip[data-v="ar"]::before{animation:none}}</style></head>
 <body>
 <div id="bgw"><div id="mesh"></div></div>
 <header>
@@ -477,7 +480,7 @@ on();document.addEventListener('visibilitychange',function(){if(document.hidden)
 var REF='tz1hoapdBuxGVbq27HjGNktqkb82SYuoPB45', DUR=5000, STORY=20;
 var RAR=[['all','all'],['100','100–200 ed'],['20','20–50 ed'],['2','2–10 ed'],['1','1/1']];
 var FMT=[['all','all'],['still','still'],['gif','gif'],['video','video'],['html','generative / html'],['3d','3d']];
-var SRT=[['new','newest'],['lo','price ↑'],['hi','price ↓']];
+var SRT=[['new','newest'],['pr','price ↑']];
 var WHN=[['wk','this week'],['ar','archive · for sale']];
 var S={w:'wk',wk:[],arc:null,lim:120,r:'all',f:'all',s:'new',all:[],view:[],story:[],i:0,t0:0,el:0,paused:false};
 function $(i){return document.getElementById(i.replace('#',''))}
@@ -490,7 +493,7 @@ function th(x){return P('https://assets.objkt.media/file/assets-003/'+x.fa+'/'+x
 function big(x){return x.d?P('https://assets.objkt.media/file/assets-003/'+x.d+'/artifact'):th(x)}
 function who(x){return x.al||(x.tw?'@'+x.tw:(x.a.slice(0,5)+'…'+x.a.slice(-4)))}
 function fit(x){if(x.p==null||!x.ed)return false;var a=x.p*x.ed,b=x.p+x.ed;return Math.abs(a-200)<1e-6||Math.abs(b-200)<1e-6}
-function chips(id,list,key){var r=$(id);list.forEach(function(c){var b=document.createElement('button');b.className='chip'+(S[key]===c[0]?' on':'');b.dataset.v=c[0];b.innerHTML=esc(c[1])+(key!=='s'?'<small></small>':'');b.onclick=function(){S[key]=c[0];[].forEach.call(r.querySelectorAll('.chip'),function(z){z.classList.toggle('on',z.dataset.v===c[0])});apply()};r.appendChild(b)})}
+function chips(id,list,key){var r=$(id);list.forEach(function(c){var b=document.createElement('button');b.className='chip'+(S[key]===c[0]?' on':'');b.dataset.v=c[0];b.innerHTML=esc(c[1])+(key!=='s'?'<small></small>':'');b.onclick=function(){if(key==='s'&&c[0]==='pr'){S.s=S.s==='lo'?'hi':'lo';b.textContent=S.s==='lo'?'price ↑':'price ↓';[].forEach.call(r.querySelectorAll('.chip'),function(z){z.classList.toggle('on',z===b)});apply();return}S[key]=c[0];[].forEach.call(r.querySelectorAll('.chip'),function(z){z.classList.toggle('on',z.dataset.v===c[0])});apply()};r.appendChild(b)})}
 function counts(){[['rr','r',function(x){return rar(x.ed)}],['rf','f',function(x){return fmt(x.mime)}]].forEach(function(a){[].forEach.call($(a[0]).querySelectorAll('.chip'),function(b){var v=b.dataset.v,n=v==='all'?S.all.length:S.all.filter(function(x){return a[2](x)===v}).length;b.querySelector('small').textContent=n})})}
 function apply(){
   if(S.w==='ar'&&!S.arc){loadArc();$('#cnt').textContent='loading older #200tez works still for sale…';return}
