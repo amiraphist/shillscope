@@ -1225,7 +1225,7 @@ $('#more').onclick=()=>{ S.pages=0; load(); };
 /* auto load more (2026-11-05): when the load-more button scrolls into view, fetch the next batch; button stays as fallback */
 if('IntersectionObserver' in window) new IntersectionObserver(es=>{ if(es[0].isIntersecting && S.next && !S.loading && !$('#more').hidden){ S.pages=0; load(); } },{rootMargin:'600px 0px'}).observe($('#more'));
 drawSorts(); setMode(0,true);
-const pre=new URLSearchParams(location.search).get('t'); if(pre){ $('#u').value='https://x.com/i/status/'+pre; $('#f').requestSubmit(); }
+const pre=new URLSearchParams(location.search).get('t'); if(pre){ $('#u').value='https://x.com/i/status/'+pre; const goPre=()=>$('#f').requestSubmit(); document.readyState==='loading'?document.addEventListener('DOMContentLoaded',goPre):goPre(); }
 
 /* ================= demo data (file:// or ?demo) ================= */
 function demoPage(){
