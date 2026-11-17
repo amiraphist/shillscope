@@ -557,7 +557,7 @@ addEventListener('resize',function(){geo()});
 chips('rw',WHN,'w');chips('rr',RAR,'r');chips('rf',FMT,'f');chips('rs',SRT,'s');
 var Q='query($o:Int!){token(where:{tags:{tag:{name:{_eq:"200tez"}}},timestamp:{_gte:"2026-11-10T00:00:00Z"}},order_by:{timestamp:desc},limit:100,offset:$o){fa_contract token_id name mime supply timestamp display_uri lowest_ask creators{creator_address holder{alias twitter}}}}';
 function cid(u){return (u&&u.indexOf('ipfs://')===0)?u.slice(7).split('/')[0]:''}
-function page(o,acc,q,st,mx){q=q||Q;st=st||100;mx=mx==null?500:mx;return fetch('https://data.objkt.com/v3/graphql',{method:'POST',headers:{'content-type':'text/plain'},body:JSON.stringify({query:q,variables:{o:o}})}).then(function(r){return r.json()}).then(function(j){var t=(j&&j.data&&j.data.token)||[];t.forEach(function(x){var c=(x.creators&&x.creators[0])||{},h=c.holder||{},m=(h.twitter||'').match(/(?:x|twitter)\.com\/([A-Za-z0-9_]+)/);acc.push({fa:x.fa_contract,id:x.token_id,n:x.name||'untitled',mime:x.mime||'',ed:x.supply||0,ts:x.timestamp,p:x.lowest_ask==null?null:x.lowest_ask/1e6,a:c.creator_address||'',al:h.alias||'',tw:m?m[1]:'',d:cid(x.display_uri)})});return (t.length===st&&o<mx)?page(o+st,acc,q,st,mx):acc})}
+function page(o,acc,q,st,mx){q=q||Q;st=st||100;mx=mx==null?500:mx;return fetch('https://data.objkt.com/v3/graphql',{method:'POST',headers:{'content-type':'text/plain'},body:JSON.stringify({query:q,variables:{o:o}})}).then(function(r){return r.json()}).then(function(j){var t=(j&&j.data&&j.data.token)||[];t.forEach(function(x){if(!/^KT1[1-9A-HJ-NP-Za-km-z]{33}$/.test(x.fa_contract||'')||!/^\d{1,40}$/.test(String(x.token_id)))return;var c=(x.creators&&x.creators[0])||{},h=c.holder||{},m=(h.twitter||'').match(/(?:x|twitter)\.com\/([A-Za-z0-9_]+)/);acc.push({fa:x.fa_contract,id:x.token_id,n:x.name||'untitled',mime:x.mime||'',ed:x.supply||0,ts:x.timestamp,p:x.lowest_ask==null?null:x.lowest_ask/1e6,a:c.creator_address||'',al:h.alias||'',tw:m?m[1]:'',d:cid(x.display_uri)})});return (t.length===st&&o<mx)?page(o+st,acc,q,st,mx):acc})}
 function cap3(a){var per={},out=[];a.forEach(function(x){var k=x.a||x.fa;per[k]=(per[k]||0)+1;if(per[k]<=3)out.push(x)});return out}
 function pool(){window.__all=S.wk.concat(S.arc||[]);window.__fv&&__fv.sync()}
 var QA=Q.replace('timestamp:{_gte:','lowest_ask:{_is_null:false},timestamp:{_lt:').replace('limit:100','limit:500'),arcL=0;
@@ -661,10 +661,12 @@ $('cl').onclick=open;$('dx').onclick=close;$('dsh').onclick=close;addEventListen
 function st(t,c){var p=$('dst');p.className=c||'';p.innerHTML=t}
 var BX=null;
 function loadBeacon(){if(window.beacon)return Promise.resolve(window.beacon);return new Promise(function(ok,no){var s=document.createElement('script');s.src='https://shillscope.art/assets/vendor/walletbeacon-4.8.1.min.js';s.integrity='sha384-BRG93bqbyUWvDu3ImCSrlsOmHKakx1XM9AZiihMekRYBJinl0IKE5XZxTU14EG1K';s.crossOrigin='anonymous';s.onload=function(){window.beacon?ok(window.beacon):no()};s.onerror=no;document.head.appendChild(s)})}
-function fresh(ks){var w=ks.map(function(k){var p=k.split(':');return '{fa_contract:{_eq:"'+p[0]+'"},token_id:{_eq:"'+p[1]+'"}}'}).join(',');
+var OKK=/^KT1[1-9A-HJ-NP-Za-km-z]{33}:\d{1,40}$/,RQ=null;
+function refOk(){if(!RQ)RQ=fetch('https://shillscope.amiraphist.workers.dev/api/ref',{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){return !!j&&j.tez===REF&&/^tz1[1-9A-HJ-NP-Za-km-z]{33}$/.test(REF)}).catch(function(){RQ=null;return false});return RQ}
+function fresh(ks){ks=ks.filter(function(k){return OKK.test(k)});var w=ks.map(function(k){var p=k.split(':');return '{fa_contract:{_eq:"'+p[0]+'"},token_id:{_eq:"'+p[1]+'"}}'}).join(',');
   var q='{token(where:{_or:['+w+']}){fa_contract token_id listings_active(order_by:{price:asc},limit:3){bigmap_key marketplace_contract price currency_id seller_address amount_left}}}';
   return fetch('https://data.objkt.com/v3/graphql',{method:'POST',headers:{'content-type':'text/plain'},body:JSON.stringify({query:q})}).then(function(r){return r.json()}).then(function(j){return (j&&j.data&&j.data.token)||[]})}
-function op(l){var k=String(l.bigmap_key),m=l.marketplace_contract,v;
+function op(l){var k=String(l.bigmap_key),m=l.marketplace_contract,v;if(!/^\d{1,20}$/.test(k)||!/^\d{1,15}$/.test(String(l.price))||!(+l.price>0)||!MK[m])throw new Error('bad listing');
   if(m==='KT1SwbTqhSKF6Pdokiu1K4Fpi17ahPPzmt1X')v={entrypoint:'fulfill_ask',value:{prim:'Pair',args:[{int:k},{prim:'Pair',args:[{int:'1'},{prim:'Pair',args:[{prim:'None'},{prim:'Pair',args:[{prim:'None'},[{prim:'Elt',args:[{string:REF},{int:'10000'}]}]]}]}]}]}};
   else if(m==='KT1WvzYHCNBvDSdwafTHv7nJ1dWmZ8GCYuuC')v={entrypoint:'fulfill_ask',value:{prim:'Pair',args:[{int:k},{prim:'None'}]}};
   else v={entrypoint:'collect',value:{int:k}};
@@ -672,13 +674,14 @@ function op(l){var k=String(l.bigmap_key),m=l.marketplace_contract,v;
 $('dbuy').onclick=async function(){var b=this,ks=list().filter(function(k){return F[k].p!=null});if(!ks.length)return;
   b.dataset.busy=1;b.disabled=true;b.textContent='checking prices\u2026';st('');
   try{
+    if(!await refOk()){st('collect all is paused for a quick safety check. you can still collect each piece on objkt.','err');return}
     var toks=await fresh(ks.slice(0,30));
     b.textContent='connecting wallet\u2026';var bc=await loadBeacon();
     if(!BX)BX=new bc.DAppClient({name:'shillscope \u00b7 #200tez',network:{type:bc.NetworkType?bc.NetworkType.MAINNET:'mainnet'}});
     var acc=await BX.getActiveAccount();if(!acc){await BX.requestPermissions();acc=await BX.getActiveAccount()}
     var me=acc&&acc.address,ops=[],sum=0,skip=[];
     toks.forEach(function(t){var k=t.fa_contract+':'+t.token_id,l=(t.listings_active||[]).filter(function(x){return x.currency_id===1&&MK[x.marketplace_contract]&&x.seller_address!==me&&x.amount_left>0})[0];
-      if(!l){skip.push(k);return}ops.push({k:k,o:op(l)});sum+=l.price/1e6;F[k].p=l.price/1e6});
+      if(!l){skip.push(k);return}var oo;try{oo=op(l)}catch(e){skip.push(k);return}ops.push({k:k,o:oo});sum+=l.price/1e6;F[k].p=l.price/1e6});
     save();draw();
     if(!ops.length){st('none of these can be collected right now','err');return}
     b.textContent='confirm in your wallet\u2026';
