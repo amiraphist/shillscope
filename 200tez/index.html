@@ -569,8 +569,8 @@ page(0,[]).then(function(items){var j={items:items};
 </script>
 <div id="pm" aria-hidden="true"><div id="pg" role="dialog" aria-label="shill your 200">
 <button class="x" type="button" aria-label="close">×</button>
-<div><h1>shill your <span>200</span></h1><p class="sub mono">drop your objkt link. get a ready-to-post #200tez shill.</p></div>
-<form id="pf" autocomplete="off"><input id="pu" placeholder="objkt.com/tokens/…" inputmode="url" spellcheck="false" aria-label="objkt link"><button class="btn" id="pgen">gen</button></form>
+<div><h1>shill your <span>200</span></h1><p class="sub mono">drop your tezos art link (objkt, teia, fxhash). get a ready-to-post #200tez shill.</p></div>
+<form id="pf" autocomplete="off"><input id="pu" placeholder="objkt · teia · fxhash link" inputmode="url" spellcheck="false" aria-label="tezos art link"><button class="btn" id="pgen">gen</button></form>
 <p id="perr" class="mono"></p>
 <div class="cols"><div class="lc">
 <div class="fields">
@@ -592,7 +592,12 @@ function open(){pm.classList.add('on');pm.setAttribute('aria-hidden','false');se
 function close(){pm.classList.remove('on');pm.setAttribute('aria-hidden','true')}
 $('pgo').onclick=open;pm.addEventListener('click',function(e){if(e.target===pm||e.target.classList.contains('x'))close()});addEventListener('keydown',function(e){if(e.key==='Escape')close()});
 try{if(localStorage.getItem('ss_ws')==='0')$('pss').checked=false}catch(e){}
-function parse(u){try{var h=new URL(u.trim());if(!/(^|\.)objkt\.com$/i.test(h.hostname))return null;var m=h.pathname.match(/\/(?:tokens|asset)\/([^\/]+)\/(\d+)/i);return m?{a:m[1],i:m[2]}:null}catch(e){return null}}
+var HEN='KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton',FX={'0':['KT1KEa8z6vWXDJrVqtMrAeDVzsvxat3kHaCE'],'1':['KT1U6EHmNxJTkvaWJ4ThczG4FSDaHC21ssvi'],'2':['KT1EfsNuqwLAWDd3o4pvfUx1CAh5GMdTrRvr']};
+function parse(u){try{var v=u.trim();if(!/^https?:\/\//i.test(v))v='https://'+v;var h=new URL(v),n=h.hostname.replace(/^www\./i,'').toLowerCase(),p=h.pathname,m,lk=h.origin+h.pathname;
+  if(/(^|\.)objkt\.com$/.test(n)){m=p.match(/\/(?:tokens|asset)\/([^\/]+)\/(\d+)/i);if(!m)return null;return /^hicetnunc$/i.test(m[1])?{c:[HEN],i:m[2],l:lk}:/^KT1\w{33}$/.test(m[1])?{c:[m[1]],i:m[2],l:lk}:{a:m[1],i:m[2],l:lk}}
+  if(/(^|\.)(teia\.art|hicetnunc\.xyz|hic\.af)$/.test(n)){m=p.match(/\/objkt\/(\d+)/i);return m?{c:[HEN],i:m[1],l:lk}:null}
+  if(/(^|\.)fxhash\.xyz$/.test(n)){m=p.match(/\/gentk\/(KT1[1-9A-HJ-NP-Za-km-z]{33})-(\d+)/);if(m)return{c:[m[1]],i:m[2],l:lk};m=p.match(/\/gentk\/(?:FX\d-)?(\d+)/i);return m?{c:FX['1'].concat(FX['0'],FX['2']),i:m[1],l:lk}:null}
+  m=(h.pathname+h.hash).match(/(KT1[1-9A-HJ-NP-Za-km-z]{33})[\/-](?:tokens\/)?(\d+)/);return m?{c:[m[1]],i:m[2],l:lk}:null}catch(e){return null}}
 function compose(){var t=$('qt').value.trim(),pr=$('qp').value.trim(),ed=$('qe').value.trim(),d=$('qd').value.trim(),L=[];
   if(t)L.push('\u00b7 Name: '+t);
   var pp=[pr?pr+' '+$('qc').value:'',ed?(ed==='1'?'1/1':'ed '+ed):''].filter(Boolean).join(' \u00b7 ');if(pp)L.push('\u00b7 Price: '+pp);
@@ -608,18 +613,19 @@ function build(L,dd){var full=tail(L.concat(dd?['\u00b7 Description: '+dd]:[]).j
 function cnt(){var t=$('pout').value,n=Array.from(t.replace(/https?:\/\/\S+/g,'xxxxxxxxxxxxxxxxxxxxxxx')).length,c=$('pcnt');c.textContent=n+'/280';c.classList.toggle('over',n>280)}
 $('pout').addEventListener('input',cnt);['qt','qe','qp','qd'].forEach(function(k){$(k).addEventListener('input',compose)});['pwd','pwl','p200'].forEach(function(k){$(k).onchange=compose});
 $('pss').onchange=function(){try{localStorage.setItem('ss_ws',this.checked?'1':'0')}catch(e){}compose()};
-var Q='query($a:String!,$i:String!){token(where:{token_id:{_eq:$i},_or:[{fa_contract:{_eq:$a}},{fa:{path:{_eq:$a}}}]},limit:1){fa_contract token_id name description supply lowest_ask tags{tag{name}}}}';
+var SEL='{fa_contract token_id name description supply lowest_ask timestamp tags{tag{name}}}',Q='query($a:String!,$i:String!){token(where:{token_id:{_eq:$i},_or:[{fa_contract:{_eq:$a}},{fa:{path:{_eq:$a}}}]},limit:1)'+SEL+'}',QC='query($c:[String!],$i:String!){token(where:{token_id:{_eq:$i},fa_contract:{_in:$c}},limit:5)'+SEL+'}';
 $('pf').onsubmit=function(e){e.preventDefault();var k=parse($('pu').value),er=$('perr');er.className='mono';er.textContent='';
-  if(!k){er.textContent='paste an objkt token link';return}
+  if(!k){er.textContent='paste an objkt, teia or fxhash token link';return}
   var b=$('pgen');b.disabled=true;b.textContent='\u2026';
-  fetch('https://data.objkt.com/v3/graphql',{method:'POST',headers:{'content-type':'text/plain'},body:JSON.stringify({query:Q,variables:{a:k.a,i:k.i}})}).then(function(r){return r.json()}).then(function(j){
-    var x=j&&j.data&&j.data.token&&j.data.token[0];if(!x){er.textContent='couldn\u2019t find this token on objkt';return}
-    T={p:x.lowest_ask==null?null:x.lowest_ask/1e6,ed:x.supply||0,url:'https://objkt.com/tokens/'+x.fa_contract+'/'+x.token_id};
+  fetch('https://data.objkt.com/v3/graphql',{method:'POST',headers:{'content-type':'text/plain'},body:JSON.stringify(k.c?{query:QC,variables:{c:k.c,i:k.i}}:{query:Q,variables:{a:k.a,i:k.i}})}).then(function(r){return r.json()}).then(function(j){
+    var L=(j&&j.data&&j.data.token)||[],tg=function(t){return (t.tags||[]).some(function(g){return g.tag&&String(g.tag.name).toLowerCase()==='200tez'})};
+    L.sort(function(a,b){return (tg(b)-tg(a))||(String(b.timestamp)>String(a.timestamp)?1:-1)});var x=L[0];if(!x){er.textContent='couldn\u2019t find this token';return}
+    T={p:x.lowest_ask==null?null:x.lowest_ask/1e6,ed:x.supply||0,url:/^https:\/\/(www\.)?objkt\.com\//i.test(k.l)?'https://objkt.com/tokens/'+x.fa_contract+'/'+x.token_id:k.l};
     $('qt').value=x.name||'';$('qe').value=T.ed||'';$('qp').value=T.p!=null?T.p:'';$('qd').value=(x.description||'').trim().slice(0,600);
     var im='https://shillscope.amiraphist.workers.dev/api/img?u='+encodeURIComponent('https://assets.objkt.media/file/assets-003/'+x.fa_contract+'/'+x.token_id+'/thumb400');
     $('pimg').src=im;$('pdl').href=im;$('pdl').setAttribute('download',(x.name||'art').replace(/[^\w-]+/g,'-').slice(0,40)+'.jpg');$('part').hidden=false;
     var tagged=(x.tags||[]).some(function(t){return t.tag&&String(t.tag.name).toLowerCase()==='200tez'}),ok=T.p!=null&&T.ed&&(Math.abs(T.p*T.ed-200)<1e-6||Math.abs(T.p+T.ed-200)<1e-6);
-    var notes=[];if(!ok)notes.push('price \u00d7 editions or price + editions should be 200 tez');if(!tagged)notes.push('add the 200tez tag on objkt so it shows on this page');
+    var notes=[];if(!ok)notes.push('price \u00d7 editions or price + editions should be 200 tez');if(!tagged)notes.push('add the 200tez tag so it shows on this page');
     if(notes.length)er.textContent=notes.join(' \u00b7 ');else{er.className='mono ok';er.textContent='200 \u2713 ready to post'}
     compose()
   }).catch(function(){er.textContent='objkt didn\u2019t answer, try again'}).then(function(){b.disabled=false;b.textContent='gen'})};
