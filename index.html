@@ -1381,5 +1381,82 @@ so.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();w
 <script>(function(){var t=document.getElementById('t2b');if(!t||!window.__EV||!__EV.t200)return;t.classList.add('on');var b=document.getElementById('cityb');
 function pos(){if(b&&b.offsetWidth&&innerWidth>820)t.style.left=(b.offsetLeft+b.offsetWidth+8)+'px';}pos();addEventListener('resize',pos);setTimeout(pos,600);})();</script>
 <style>#totop{position:fixed;right:16px;bottom:calc(max(16px,env(safe-area-inset-bottom)) + 0px);z-index:14;width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(20,20,20,.55);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0;transform:translateY(10px);pointer-events:none;transition:opacity .3s,transform .3s;padding:0}#totop.on{opacity:1;transform:none;pointer-events:auto}#totop svg{width:18px;height:18px}#totop:hover{background:rgba(224,36,43,.85)}@media(max-width:700px){#totop{width:44px;height:44px;bottom:calc(max(16px,env(safe-area-inset-bottom)) + 0px)}}</style><button id="totop" type="button" aria-label="back to top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button><script>(function(){var b=document.getElementById("totop");function u(){b.classList.toggle("on",scrollY>innerHeight*2)}addEventListener("scroll",u,{passive:true});u();b.onclick=function(){scrollTo({top:0,behavior:"smooth"})}})();</script>
+<style>
+#dtz{margin-top:auto;border-top:1px solid var(--line);padding:14px 16px max(16px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:9px;background:inherit}
+#dtz[hidden]{display:none}
+#dtz .r{display:flex;align-items:baseline;justify-content:space-between;gap:10px;font:400 12px 'JetBrains Mono',monospace;color:var(--mute)}
+#dtz .r b{font:700 15px 'Space Grotesk',system-ui,sans-serif;color:var(--fg)}
+#dtzb{appearance:none;border:0;border-radius:999px;background:var(--acc);color:#fff;font:700 14px 'Space Grotesk',system-ui,sans-serif;padding:13px 18px;cursor:pointer;box-shadow:0 6px 24px rgba(224,36,43,.3);width:100%}
+#dtzb:disabled{opacity:.45;cursor:default;box-shadow:none}
+#dtzs{margin:0;font:400 11px 'JetBrains Mono',monospace;color:var(--mute);text-align:center;line-height:1.5}
+#dtze{margin:0;font:400 11px 'JetBrains Mono',monospace;color:var(--mute);text-align:center}#dtze[hidden]{display:none}
+#dtzs.err{color:#ff6b6b}#dtzs.ok{color:#5fd38d}#dtzs a{color:inherit}
+.ditem.tzon{box-shadow:inset 3px 0 0 #0f61fb}
+</style>
+<script>/* collect all (tezos) in the gallery collect list, ported from /200tez. lab 2026-11-18 */
+(function(){
+var REF='tz1hoapdBuxGVbq27HjGNktqkb82SYuoPB45',HEN='KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton',FX=['KT1U6EHmNxJTkvaWJ4ThczG4FSDaHC21ssvi','KT1KEa8z6vWXDJrVqtMrAeDVzsvxat3kHaCE','KT1EfsNuqwLAWDd3o4pvfUx1CAh5GMdTrRvr'];
+var MK={'KT1SwbTqhSKF6Pdokiu1K4Fpi17ahPPzmt1X':1,'KT1WvzYHCNBvDSdwafTHv7nJ1dWmZ8GCYuuC':1,'KT1PHubm9HtyQEJ4BBpMTVomq6mhbfNZ9z5w':1};
+var KT=/^KT1[1-9A-HJ-NP-Za-km-z]{33}$/,AL=/^[a-z0-9_.-]{1,60}$/i,ID=/^\d{1,40}$/,MAX=30;
+var dr=document.getElementById('drawer'),dl=document.getElementById('dlist');if(!dr||!dl||typeof S==='undefined')return;
+var box=document.createElement('div');box.id='dtz';box.hidden=true;
+box.innerHTML='<div class="r"><span id="dtzn">tezos</span><b id="dtzt"></b></div><button id="dtzb" type="button" disabled>collect all</button><p id="dtzs">one signature in your tezos wallet \u00b7 objkt + teia</p><p id="dtze" hidden></p>';
+dr.appendChild(box);
+var $=function(i){return document.getElementById(i)},L={},sig='',busy=0,qT=0;
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function parse(u){try{var h=new URL(u),n=h.hostname.replace(/^www\./i,'').toLowerCase(),p=h.pathname,m;
+  if(/(^|\.)objkt\.com$/.test(n)){m=p.match(/\/(?:tokens|asset)\/([^\/]+)\/(\d+)/i);if(!m)return null;if(/^hicetnunc$/i.test(m[1]))return{c:[HEN],i:m[2]};if(KT.test(m[1]))return{c:[m[1]],i:m[2]};return AL.test(m[1])?{a:m[1].toLowerCase(),i:m[2]}:null}
+  if(/(^|\.)(teia\.art|hicetnunc\.xyz|hic\.af)$/.test(n)){m=p.match(/\/objkt\/(\d+)/i);return m?{c:[HEN],i:m[1]}:null}
+  if(/(^|\.)fxhash\.xyz$/.test(n)){m=p.match(/\/gentk\/(KT1[1-9A-HJ-NP-Za-km-z]{33})-(\d+)/);if(m)return{c:[m[1]],i:m[2]};m=p.match(/\/gentk\/(?:FX\d-)?(\d+)$/i);return m?{c:FX,i:m[1]}:null}
+  return null}catch(e){return null}}
+function tzList(){return Object.keys(S.favs||{}).sort(function(a,b){return (S.favs[b].t||0)-(S.favs[a].t||0)}).map(function(k){var f=S.favs[k],t=f&&f.buy&&parse(f.buy);return t&&ID.test(t.i)?{k:k,t:t}:null}).filter(Boolean)}
+function fresh(xs){var w=xs.map(function(x){var t=x.t;return t.a?'{token_id:{_eq:"'+t.i+'"},fa:{path:{_eq:"'+t.a+'"}}}':'{token_id:{_eq:"'+t.i+'"},fa_contract:{_in:['+t.c.map(function(c){return '"'+c+'"'}).join(',')+']}}'}).join(',');
+  var q='{token(where:{_or:['+w+']},limit:'+(xs.length*3)+'){fa_contract token_id fa{path} listings_active(order_by:{price:asc},limit:4){bigmap_key marketplace_contract price currency_id seller_address amount_left}}}';
+  return fetch('https://data.objkt.com/v3/graphql',{method:'POST',headers:{'content-type':'text/plain'},body:JSON.stringify({query:q})}).then(function(r){return r.json()}).then(function(j){var ts=(j&&j.data&&j.data.token)||[],o={};
+    xs.forEach(function(x){var t=x.t,m=ts.filter(function(y){return y.token_id===t.i&&(t.a?(y.fa&&String(y.fa.path).toLowerCase()===t.a):t.c.indexOf(y.fa_contract)>=0)})[0];o[x.k]=m||null});return o})}
+function pick(tok,me){if(!tok)return null;return (tok.listings_active||[]).filter(function(l){return l.currency_id===1&&MK[l.marketplace_contract]&&l.amount_left>0&&(!me||l.seller_address!==me)&&/^\d{1,20}$/.test(String(l.bigmap_key))&&/^\d{1,15}$/.test(String(l.price))&&+l.price>0})[0]||null}
+function tz(v){return (+v.toFixed(2))+' tez'}
+function st(t,c){var p=$('dtzs');p.className=c||'';p.innerHTML=t}
+function paint(){var xs=tzList(),n=0,sum=0,nl=0,pend=0;box.hidden=!xs.length;var ne=Object.keys(S.favs||{}).length-xs.length,e=$('dtze');e.hidden=!ne;e.textContent=ne?ne+' other piece'+(ne===1?'':'s')+' (ethereum etc.) \u00b7 collect each with its own button':'';
+  dl.querySelectorAll('.ditem').forEach(function(d){d.classList.toggle('tzon',!!L[d.dataset.id]&&!!L[d.dataset.id].l)});
+  if(!xs.length)return;
+  xs.forEach(function(x){var e=L[x.k];if(!e)pend++;else if(e.l){n++;sum+=e.l.price/1e6}else nl++});
+  $('dtzn').textContent=xs.length+' on tezos'+(nl?' \u00b7 '+nl+' not listed':'')+(pend?' \u00b7 checking\u2026':'');
+  $('dtzt').textContent=n?tz(sum):'';
+  if(!busy){var b=$('dtzb');b.disabled=!n;b.textContent=n?'collect all \u00b7 '+tz(sum)+(n>1?' ('+n+')':''):'collect all'}}
+function refresh(force){var xs=tzList(),s=xs.map(function(x){return x.k}).join('|');if(!force&&s===sig){paint();return}sig=s;
+  xs.forEach(function(x){if(force)delete L[x.k]});paint();if(!xs.length)return;clearTimeout(qT);
+  qT=setTimeout(function(){fresh(xs.slice(0,60)).then(function(o){Object.keys(o).forEach(function(k){L[k]={l:pick(o[k])}});paint()}).catch(function(){xs.forEach(function(x){if(!L[x.k])L[x.k]={l:null}});paint()})},250)}
+new MutationObserver(function(){refresh(false)}).observe(dl,{childList:true});
+new MutationObserver(function(){if(dr.classList.contains('open'))refresh(true)}).observe(dr,{attributes:true,attributeFilter:['class']});
+var RQ=null;function refOk(){if(!RQ)RQ=fetch((window.SSB||'')+'/api/ref',{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){return !!j&&j.tez===REF}).catch(function(){RQ=null;return false});return RQ}
+var BX=null;function loadBeacon(){if(window.beacon)return Promise.resolve(window.beacon);return new Promise(function(ok,no){var s=document.createElement('script');s.src='https://shillscope.art/assets/vendor/walletbeacon-4.8.1.min.js';s.integrity='sha384-BRG93bqbyUWvDu3ImCSrlsOmHKakx1XM9AZiihMekRYBJinl0IKE5XZxTU14EG1K';s.crossOrigin='anonymous';s.onload=function(){window.beacon?ok(window.beacon):no(new Error('wallet kit didn\u2019t load'))};s.onerror=function(){no(new Error('wallet kit didn\u2019t load'))};document.head.appendChild(s)})}
+function op(l){var k=String(l.bigmap_key),m=l.marketplace_contract,v;
+  if(m==='KT1SwbTqhSKF6Pdokiu1K4Fpi17ahPPzmt1X')v={entrypoint:'fulfill_ask',value:{prim:'Pair',args:[{int:k},{prim:'Pair',args:[{int:'1'},{prim:'Pair',args:[{prim:'None'},{prim:'Pair',args:[{prim:'None'},[{prim:'Elt',args:[{string:REF},{int:'10000'}]}]]}]}]}]}};
+  else if(m==='KT1WvzYHCNBvDSdwafTHv7nJ1dWmZ8GCYuuC')v={entrypoint:'fulfill_ask',value:{prim:'Pair',args:[{int:k},{prim:'None'}]}};
+  else v={entrypoint:'collect',value:{int:k}};
+  return {kind:'transaction',destination:m,amount:String(l.price),parameters:v}}
+$('dtzb').onclick=async function(){var b=this,xs=tzList().filter(function(x){return L[x.k]&&L[x.k].l}).slice(0,MAX);if(!xs.length)return;
+  busy=1;b.disabled=true;b.textContent='checking prices\u2026';st('one signature in your tezos wallet \u00b7 objkt + teia');
+  try{
+    if(!await refOk()){st('collect all is paused for a quick safety check. you can still collect each piece on its page.','err');return}
+    b.textContent='connecting wallet\u2026';var bc=await loadBeacon();
+    if(!BX)BX=new bc.DAppClient({name:'shillscope',network:{type:bc.NetworkType?bc.NetworkType.MAINNET:'mainnet'}});
+    var acc=await BX.getActiveAccount();if(!acc){await BX.requestPermissions();acc=await BX.getActiveAccount()}
+    var me=acc&&acc.address;b.textContent='checking prices\u2026';
+    var o=await fresh(xs),ops=[],sum=0,skip=0;
+    xs.forEach(function(x){var l=pick(o[x.k],me);L[x.k]={l:l};if(!l){skip++;return}ops.push({k:x.k,o:op(l)});sum+=l.price/1e6});
+    paint();if(!ops.length){st('none of these can be collected right now','err');return}
+    b.textContent='confirm in your wallet\u2026';
+    var r=await BX.requestOperation({operationDetails:ops.map(function(x){return x.o})});
+    var h=r&&(r.transactionHash||r.opHash);
+    ops.forEach(function(x){delete L[x.k];try{unfav(x.k)}catch(e){}});
+    st('collected '+ops.length+' \u00b7 '+tz(sum)+(h&&/^o[1-9A-HJ-NP-Za-km-z]{50}$/.test(h)?' \u00b7 <a href="https://tzkt.io/'+esc(h)+'" target="_blank" rel="noopener">view on tzkt</a>':'')+(skip?' \u00b7 '+skip+' skipped (sold or not listed)':''),'ok');
+  }catch(e){var m=(e&&(e.description||e.message||e.errorType))||'';st(/abort|reject|cancel/i.test(m)?'cancelled in wallet':'didn\u2019t go through'+(m?': '+esc(String(m).slice(0,80)):''),'err')}
+  finally{busy=0;paint()}};
+refresh(true);
+})();
+</script>
+
 </body>
 </html>
