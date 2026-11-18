@@ -604,6 +604,7 @@ load();setInterval(function(){if(!document.hidden)load()},60000);});</script>
   <a id="t2b" href="/200tez" aria-label="#200tez event, nov 17 to 22"><i aria-hidden="true"></i>#200tez · live</a>
   <a id="cmg" href="/gen/">cm gen</a>
   <button id="cityb" type="button" aria-label="enter shill square"><span class="cb" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span>shill square</button>
+<script>/* #200tez pill: same gap after shill square as cm gen -> shill square (desktop; mobile css uses !important) */(function(){function f(){var a=document.getElementById("cmg"),b=document.getElementById("cityb"),t=document.getElementById("t2b");if(!a||!b||!t||!b.offsetWidth||!a.offsetWidth)return;var g=b.offsetLeft-(a.offsetLeft+a.offsetWidth);if(g<4||g>60)g=12;t.style.left=(b.offsetLeft+b.offsetWidth+g)+"px"}f();addEventListener("load",f);addEventListener("resize",f);document.fonts&&document.fonts.ready.then(f)})();</script>
 <script>/* shillscope city: nothing loads until the cube is clicked (or /#city); the module is only prefetched when idle */
 (function(){var b=document.getElementById('cityb'),c=document.getElementById('cmg'),V='20',src=(window.SSB||'')+'/city/city.js?v='+V,p=null;
 function pos(){if(c&&b&&c.offsetWidth)b.style.left=(c.offsetLeft+c.offsetWidth+8)+'px';}
