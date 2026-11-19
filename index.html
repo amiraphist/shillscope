@@ -702,6 +702,7 @@ const PLATFORMS = [
   ['mint.fun','mint.fun',null],['sound.xyz','Sound','ETH'],['async.art','Async','ETH'],['art.art','Art.art',null],['deca.art','Deca',null],
   ['oncyber.io','oncyber',null],['scatter.art','Scatter','ETH'],['showtime.xyz','Showtime',null],['rodeo.club','Rodeo','Base'],['vv.xyz','VV','ETH'],
   ['lazy.com','Lazy',null],['hic.art','HEN','Tezos'],['versum.xyz','Versum','Tezos'],['8bidou.com','8bidou','Tezos'],['ronin','Ronin',null],
+  ['artcollect.io','ArtCollect','Tezos'],
   ['ipfs.io','IPFS',null],['etherscan.io','Etherscan','ETH'],['basescan.org','Basescan','Base'],
 ];
 function platformOf(url){
@@ -992,7 +993,7 @@ function statsOf(x,full){ const d='<i class="dot">•</i>', c=x.replies||0;
 function tagsOf(x){
   return [ x.platform?`<span class="tag plat">${esc(x.platform)}</span>`:'', x.price?`<span class="tag price">${esc(x.price.label)}</span>`:'',
     x.ed?`<span class="tag">${esc(x.ed)}</span>`:'', x.sale==='auction'?`<span class="tag auc">auction</span>`:x.sale==='mint'?`<span class="tag auc">mint</span>`:'', x.chain&&!(x.buy&&x.buy.p.chain===x.chain&&x.platform)?`<span class="tag">${esc(x.chain)}</span>`:'',
-    x._gem?`<span class="tag gem">gem</span>`:'' ].join('');
+    x._gem?`<span class="tag gem">gem</span>`:'', x._acs?`<span class="tag">${esc(x._acs)}</span>`:'' ].join('');
 }
 function btnOf(x){ return x.buy ? `<a class="buy" href="${esc(x.buy.url)}" target="_blank" rel="noopener">collect on ${esc(x.buy.p.name)} ↗</a>`
                                 : `<a class="buy ghost" href="${esc(x.url)}" target="_blank" rel="noopener">${x.src==='oz'?'view on objkt.social':'view on x'} ↗</a>`; }
@@ -1034,7 +1035,17 @@ function card(x){
 }
 window.pxRefresh=()=>{ S.els.clear(); render(); };
 function elFor(x,i){ let el=S.els.get(x.id); if(!el){ el=card(x); el.style.animationDelay=Math.min(i,24)*22+'ms'; S.els.set(x.id,el); } return el; }
+/* ArtCollect (2026-11-19): real listing price + sale type from artcollect's public api via our /api/price */
+const ACQ=[];let ACB=0,ACT=0;
+function acFill(){ (S.items||[]).forEach(x=>{ if(x._acq||!x.buy||!/(^|\.)artcollect\.io$/i.test(x.buy.p.host||'')) return; x._acq=1; ACQ.push(x); }); acNext(); }
+function acNext(){ while(ACB<4&&ACQ.length){ const x=ACQ.shift(); ACB++;
+  fetch(SSB+'/api/price?u='+encodeURIComponent(x.buy.url)).then(r=>r.json()).then(j=>{ if(!j||!j.ok) return;
+    if(j.kind==='buy'||j.kind==='auction'){ x.price={val:j.val,cur:'XTZ',usd:j.val*(USD.XTZ||1),label:j.val+' XTZ'}; x.sale=j.kind==='auction'?'auction':'buy now'; x._acs=''; }
+    else { x.price=null; x.sale=null; x._acs=j.sale==='offers'?'offers':'not listed'; }
+    const el=S.els&&S.els.get(x.id); if(el){ let t=el.querySelector('.tags'); if(!t){ t=document.createElement('div'); t.className='tags'; el.querySelector('.info').prepend(t); } t.innerHTML=tagsOf(x); }
+    clearTimeout(ACT); ACT=setTimeout(()=>{ if(S.items&&S.items.length) render(false); },400); }).catch(()=>{}).finally(()=>{ ACB--; acNext(); }); } }
 function render(animate){
+  acFill();
   document.body.classList.add('loaded'); bgPlay(false);
   if(!S._k){ S._k=1; requestAnimationFrame(()=>{ setMode(S.mode,true); placeSort(); }); } else { if(!$('#track').classList.contains('drag')) setMode(S.mode,true); if(!$('#strack').classList.contains('drag')) placeSort(); }
   S.view = sorted();
