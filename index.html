@@ -532,7 +532,7 @@ html.tue h1 .so{cursor:pointer}
 #t2b::before{background:conic-gradient(from var(--ca),transparent 0 62%,rgba(255,255,255,.3) 72%,#fff 86%,transparent 100%)!important}
 @keyframes t2bp{0%{box-shadow:0 0 0 0 rgba(255,255,255,.7)}100%{box-shadow:0 0 0 7px rgba(255,255,255,0)}}
 @keyframes t2bn{0%,8%,100%{transform:none}1.2%{transform:scale(1.08) rotate(-3deg)}2.6%{transform:scale(1.08) rotate(3deg)}4%{transform:scale(1.06) rotate(-2deg)}5.4%{transform:scale(1.04) rotate(1deg)}}
-@media (prefers-reduced-motion:reduce){#t2b.on,#t2b i{animation:none!important}}</style></head>
+@media (prefers-reduced-motion:reduce){#t2b.on,#t2b i{animation:none!important}}</style><style>.srcic{flex:none;display:inline-flex;align-items:center;justify-content:center;height:22px;min-width:22px;padding:0 8px;border-radius:999px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);font:500 11px/1 "JetBrains Mono",ui-monospace,monospace;color:rgba(255,255,255,.75);letter-spacing:.02em}[data-theme=light] .srcic{border-color:rgba(0,0,0,.14);background:rgba(0,0,0,.04);color:rgba(0,0,0,.7)}</style></head>
 <body>
 <script>window.SSB=/workers\.dev$/.test(location.hostname)?'':'https://shillscope.amiraphist.workers.dev';</script>
 <div id="bg"><div id="mesh"><i></i></div><canvas id="trk" aria-hidden="true"></canvas></div>
@@ -789,7 +789,9 @@ const $ = s => document.querySelector(s);
 const fmt = n => n>=1e6?(n/1e6).toFixed(1).replace(/\.0$/,'')+'m':n>=1e3?(n/1e3).toFixed(1).replace(/\.0$/,'')+'k':String(n||0);
 const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const ago = d => { const s=(Date.now()-new Date(d))/1e3; return s<3600?Math.max(1,Math.round(s/60))+'m':s<86400?Math.round(s/3600)+'h':Math.round(s/86400)+'d'; };
-function parseId(v){ const m=(v||'').trim().match(/^(?:https?:\/\/)?(?:(?:www|mobile)\.)?(?:x|twitter)\.com\/(?:[A-Za-z0-9_]{1,15}|i(?:\/web)?)\/status(?:es)?\/(\d{5,25})(?:[\/?#].*)?$/i); return m&&m[1]; }
+const OZAV="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='20' fill='%23333'/%3E%3Ccircle cx='20' cy='20' r='7' fill='none' stroke='%23e33' stroke-width='3'/%3E%3C/svg%3E";
+function OZU(t){ const o=String(t).match(/^o~(.+)~([a-z0-9]+)$/i); return o?'https://objkt.com/social/'+o[1]+'/'+o[2]:'https://x.com/i/status/'+t; }
+function parseId(v){ const o=(v||'').trim().match(/^(?:https?:\/\/)?(?:www\.)?objkt\.com\/social\/([A-Za-z0-9][A-Za-z0-9.\-]{1,250})\/([a-z0-9]{6,20})(?:[\/?#].*)?$/i)||(v||'').trim().match(/^o~([A-Za-z0-9][A-Za-z0-9.\-]{1,250})~([a-z0-9]{6,20})$/i); if(o) return 'o~'+o[1].toLowerCase()+'~'+o[2]; const m=(v||'').trim().match(/^(?:https?:\/\/)?(?:(?:www|mobile)\.)?(?:x|twitter)\.com\/(?:[A-Za-z0-9_]{1,15}|i(?:\/web)?)\/status(?:es)?\/(\d{5,25})(?:[\/?#].*)?$/i); return m&&m[1]; }
 const GEN_SITES = /^(?:www\.)?(?:superrare\.com|transient\.xyz|objkt\.com|(?:[\w-]+\.)*manifold\.xyz)$/i;
 function genSite(v){ try{ const u=new URL((v||'').trim()); return /^https?:$/.test(u.protocol) && GEN_SITES.test(u.hostname); }catch(_){ return false; } }
 /* a gif only counts as art when the reply links the piece; at most 2 replies per account */
@@ -810,7 +812,7 @@ function vf(a){ const c={business:'#e2b719',government:'#829aab',blue:'#1d9bf0'}
 async function fetchPage(){
   if (DEMO) return demoPage();
   const key = localStorage.getItem('ss:key')||'';
-  const r = await fetch(`${API}?id=${S.id}${S.next?'&next='+encodeURIComponent(S.next):''}`, {headers:key?{'x-access-key':key}:{}});
+  const r = await fetch(`${API}?id=${encodeURIComponent(S.id)}${S.next?'&next='+encodeURIComponent(S.next):''}`, {headers:key?{'x-access-key':key}:{}});
   if (r.status===401){ const k=prompt('access key'); if(k){localStorage.setItem('ss:key',k); return fetchPage();} throw new Error('access key needed'); }
   const j = await r.json().catch(()=>({error:'server error'})); if(!r.ok) throw new Error(j.error||'something went wrong');
   return j;
@@ -993,10 +995,10 @@ function tagsOf(x){
     x._gem?`<span class="tag gem">gem</span>`:'' ].join('');
 }
 function btnOf(x){ return x.buy ? `<a class="buy" href="${esc(x.buy.url)}" target="_blank" rel="noopener">collect on ${esc(x.buy.p.name)} ↗</a>`
-                                : `<a class="buy ghost" href="${esc(x.url)}" target="_blank" rel="noopener">view on x ↗</a>`; }
-function whoOf(x,extra=''){ return `<a class="who" href="https://x.com/${esc(x.author.username)}" target="_blank" rel="noopener">
-      <img src="${esc(x.author.avatar)}" alt="" loading="lazy">
-      <div><b>${esc(x.author.name||x.author.username)}${vf(x.author)}</b><span class="mono">@${esc(x.author.username)} · ${fmt(x.author.followers)}${extra}</span></div></a>`; }
+                                : `<a class="buy ghost" href="${esc(x.url)}" target="_blank" rel="noopener">${x.src==='oz'?'view on objkt.social':'view on x'} ↗</a>`; }
+function whoOf(x,extra=''){ return `<a class="who" href="${esc(x.author.home||('https://x.com/'+x.author.username))}" target="_blank" rel="noopener">
+      <img src="${esc(x.author.avatar||OZAV)}" alt="" loading="lazy">
+      <div><b>${esc(x.author.name||x.author.username)}${vf(x.author)}</b><span class="mono">@${esc(x.src==='oz'?x.author.username.replace(/\.objkt\.social$/i,''):x.author.username)} · ${fmt(x.author.followers)}${extra}</span></div></a>`; }
 function mainOf(m,i){ return m.video ? `<video class="main vid" muted loop playsinline preload="none" poster="${esc(m.url)}" data-src="${esc(m.video)}"></video>` : `<img class="main" src="${esc(m.url)}" alt="" ${i>2?'loading="lazy"':''}>`; }
 const VIO = 'IntersectionObserver' in window ? new IntersectionObserver(es=>es.forEach(e=>{ const v=e.target;
   if(e.isIntersecting){ if(!v.src&&v.dataset.src) v.src=v.dataset.src; } else if(!v.paused) v.pause(); }),{threshold:.35}) : null;   // no autoplay in grid; plays in lightbox
@@ -1055,7 +1057,7 @@ function render(animate){
   drawList();
 }
 function drawRoot(){
-  const r=S.root; $('#root').innerHTML = `<a class="rlink" href="https://x.com/${esc(r.author.username)}/status/${esc(S.id||'')}" target="_blank" rel="noopener">${r.author.avatar?`<img src="${esc(r.author.avatar)}" alt="">`:''}<span class="t"><b>@${esc(r.author.username)}</b> <span class="mono">${esc((r.text||'').slice(0,120))}</span></span></a>`;
+  const r=S.root; $('#root').innerHTML = `<a class="rlink" href="${esc(r.url||('https://x.com/'+r.author.username+'/status/'+(S.id||'')))}" target="_blank" rel="noopener"><span class="srcic">${r.src==='oz'?'objkt.social':'𝕏'}</span>${r.author.avatar?`<img src="${esc(r.author.avatar)}" alt="">`:''}<span class="t"><b>@${esc(r.author.username)}</b> <span class="mono">${esc((r.text||'').slice(0,120))}</span></span></a>`;
 }
 
 /* ================= collect list ================= */
@@ -1149,7 +1151,7 @@ function draw(){
   const lv=$('#lbv'); if(m.video){ $('#lbi').hidden=true; $('#lbi').removeAttribute('src'); lv.hidden=false; lv.poster=m.url; lv.muted=m.type==='gif'; lv.controls=m.type!=='gif'; if(lv.getAttribute('src')!==m.video) lv.src=m.video; lv.play().catch(()=>{lv.muted=true; lv.play().catch(()=>{});}); } else { lv.pause(); lv.hidden=true; lv.removeAttribute('src'); $('#lbi').hidden=false; $('#lbi').src=m.url; }
   const links = x.links.length ? `<div class="links">${x.links.map((l,k)=>`<a class="buy ${k?'ghost':''}" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(linkLabel(l,x.links))} ↗</a>`).join('')}</div>` : '';
   $('#lba').innerHTML = `
-    <a class="who" href="https://x.com/${esc(x.author.username)}" target="_blank" rel="noopener"><img src="${esc(x.author.avatar)}" alt=""><div><b>${esc(x.author.name)}${vf(x.author)}</b><span class="mono">@${esc(x.author.username)} · ${fmt(x.author.followers)} followers</span></div></a>
+    <a class="who" href="${esc(x.author.home||('https://x.com/'+x.author.username))}" target="_blank" rel="noopener"><img src="${esc(x.author.avatar||OZAV)}" alt=""><div><b>${esc(x.author.name)}${vf(x.author)}</b><span class="mono">@${esc(x.src==='oz'?x.author.username.replace(/\.objkt\.social$/i,''):x.author.username)} · ${fmt(x.author.followers)} followers</span></div></a>
     ${links}
     <div class="tags">${tagsOf(x)}</div>
     <p class="full">${linkify(x.text)}</p>
@@ -1202,7 +1204,7 @@ $('#lb').addEventListener('touchend',e=>{ if(tx==null) return; const d=e.changed
 }).catch(()=>{}); })();
 $('#f').onsubmit=e=>{
   e.preventDefault(); $('#err').textContent='';
-  const id=parseId($('#u').value); if(!id&&genSite($('#u').value)){ location.href='/gen/?url='+encodeURIComponent($('#u').value.trim()); return; } if(!id){ $('#err').textContent='paste an x.com or twitter.com thread link'; return; }
+  const id=parseId($('#u').value); if(!id&&genSite($('#u').value)){ location.href='/gen/?url='+encodeURIComponent($('#u').value.trim()); return; } if(!id){ $('#err').textContent='paste an x.com or objkt.social thread link'; return; }
   Object.assign(S,{id,root:null,items:[],next:null,pages:0,total:0,ft:0,flash:'',moreBusy:false,morePending:false}); S.els.clear(); S.filters.clear(); $('#root').innerHTML='';
   try{ const q='?t='+id+(DEMO&&location.protocol!=='file:'?'&demo':''); (location.search.includes('t=')?history.replaceState:history.pushState).call(history,{t:id},'',q); }catch(_){}
   load();
@@ -1219,14 +1221,14 @@ function goHome(push){
 }
 $('h1').onclick=()=>goHome();
 window.addEventListener('popstate',()=>{ const t=new URLSearchParams(location.search).get('t');
-  if(!t) goHome(false); else if(t!==S.id){ $('#u').value='https://x.com/i/status/'+t; $('#f').requestSubmit(); } });
+  if(!t) goHome(false); else if(t!==S.id){ $('#u').value=OZU(t); $('#f').requestSubmit(); } });
 $('#layout').onclick=e=>{ const l=e.target.dataset.l; if(l) setLayout(l); };
 
 $('#more').onclick=()=>{ S.pages=0; load(); };
 /* auto load more (2026-11-05): when the load-more button scrolls into view, fetch the next batch; button stays as fallback */
 if('IntersectionObserver' in window) new IntersectionObserver(es=>{ if(es[0].isIntersecting && S.next && !S.loading && !$('#more').hidden){ S.pages=0; load(); } },{rootMargin:'600px 0px'}).observe($('#more'));
 drawSorts(); setMode(0,true);
-const pre=new URLSearchParams(location.search).get('t'); if(pre){ $('#u').value='https://x.com/i/status/'+pre; const goPre=()=>$('#f').requestSubmit(); document.readyState==='loading'?document.addEventListener('DOMContentLoaded',goPre):goPre(); }
+const pre=new URLSearchParams(location.search).get('t'); if(pre){ $('#u').value=OZU(pre); const goPre=()=>$('#f').requestSubmit(); document.readyState==='loading'?document.addEventListener('DOMContentLoaded',goPre):goPre(); }
 
 /* ================= demo data (file:// or ?demo) ================= */
 function demoPage(){
