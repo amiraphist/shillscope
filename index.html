@@ -545,6 +545,9 @@ html.tue h1 .so{cursor:pointer}
 
 /* for sale stop (2026-11-20): 7 type stops; on phones every other label drops a line so they never overlap */
 @media (max-width:600px){#stops b:nth-of-type(even){top:52px}#tune{margin-bottom:14px}}
+
+.tag.sold{color:#fff;border-color:rgba(255,140,144,.55);background:rgba(224,36,43,.22)}[data-theme=light] .tag.sold{color:#b3141a}
+@media (max-width:820px){ #stops b{display:none} #tune{margin-bottom:0!important} #track{height:38px} #knob{width:auto;min-width:var(--kw);padding:0 16px;box-sizing:border-box} }
 </style></head>
 <body>
 <script>window.SSB=/workers\.dev$/.test(location.hostname)?'':'https://shillscope.amiraphist.workers.dev';</script>
@@ -974,16 +977,17 @@ window.addEventListener('resize',()=>placeSort());
 })();
 function capCount(v){ const s={}; let n=0; v.forEach(x=>{ const u=x.author.username; s[u]=(s[u]||0)+1; if(s[u]<=2) n++; }); return n; }
 function modeCount(i){ return capCount(S.items.filter(x=>passIn(x,i))); }   // what the gallery would actually show for this type (after filters and the 2-per-artist cap)
-function knobX(u){ const tr=$('#track'), W=tr.clientWidth||300, kw=$('#knob').offsetWidth||86; return kw/2+(W-kw)*u; }
+function KW(){ return matchMedia('(max-width:820px)').matches?86:($('#knob').offsetWidth||86); }
+function knobX(u){ const tr=$('#track'), W=tr.clientWidth||300, kw=KW(); return kw/2+(W-kw)*u; }
 function placeKnob(u,label){ const x=knobX(u); $('#knob').style.left=x+'px'; const f=$('#tfill'); f.style.left='0px'; f.style.width=x+'px'; if(label!=null) $('#klabel').textContent=label; }
 function modeLabel(i){ const n=S.items.length?modeCount(i):0; return MODES[i].l+(i&&S.items.length?' ('+n+')':''); }   // 'editions (34)', not 'edition 34' (QA, 2026-10-30)
 function setMode(i,noRender){ const ch=i!==S.mode; S.mode=i; placeKnob(i/(MODES.length-1),modeLabel(i)); drawStops(); if(ch&&!noRender) render(true); }
-function drawStops(){ const kw=$('#knob').offsetWidth||86; $('#stops').innerHTML=MODES.map((m,i)=>`<i style="left:${knobX(i/(MODES.length-1))}px" class="${i&&S.items.length&&!modeCount(i)?'z':''}"></i>`).join('')+MODES.map((m,i)=>tick(knobX(i/(MODES.length-1)),m.l,i,MODES.length,i===S.mode,i&&S.items.length&&!modeCount(i),kw)).join(''); }
+function drawStops(){ const kw=KW(); $('#stops').innerHTML=MODES.map((m,i)=>`<i style="left:${knobX(i/(MODES.length-1))}px" class="${i&&S.items.length&&!modeCount(i)?'z':''}"></i>`).join('')+MODES.map((m,i)=>tick(knobX(i/(MODES.length-1)),m.l,i,MODES.length,i===S.mode,i&&S.items.length&&!modeCount(i),kw)).join(''); }
 window.addEventListener('resize',()=>setMode(S.mode,true));
 (function(){ const tr=$('#track'); let drag=false;
   let lx=0, lt=0, sx=1, decay=0;
   const jelly=e=>{ const now=performance.now(), v=Math.abs(e.clientX-lx)/Math.max(8,now-lt); lx=e.clientX; lt=now; sx=Math.min(1.35,1+v*0.18); const k=$('#knob'); k.style.setProperty('--sx',sx.toFixed(3)); clearTimeout(decay); decay=setTimeout(()=>k.style.setProperty('--sx',1),90); };
-  const at=e=>{ const r=tr.getBoundingClientRect(), kw=$('#knob').offsetWidth||86; return Math.max(0,Math.min(1,(e.clientX-r.left-kw/2)/Math.max(1,r.width-kw))); };
+  const at=e=>{ const r=tr.getBoundingClientRect(), kw=KW(); return Math.max(0,Math.min(1,(e.clientX-r.left-kw/2)/Math.max(1,r.width-kw))); };
   const near=u=>Math.round(u*(MODES.length-1));
   const upd=e=>{ const u=at(e), i=near(u); placeKnob(u,modeLabel(i)); if(i!==S.mode){ S.mode=i; render(true); } };
   tr.addEventListener('pointerdown',e=>{ lx=e.clientX; lt=performance.now(); drag=true; tr.classList.add('drag'); tr.setPointerCapture(e.pointerId); upd(e); });
@@ -1006,9 +1010,9 @@ function statsOf(x,full){ const d='<i class="dot">•</i>', c=x.replies||0;
 function tagsOf(x){
   return [ x.platform?`<span class="tag plat">${esc(x.platform)}</span>`:'', x.price?`<span class="tag price">${esc(x.price.label)}</span>`:'',
     x.ed?`<span class="tag">${esc(x.ed)}</span>`:'', x.sale==='auction'?`<span class="tag auc">auction</span>`:x.sale==='mint'?`<span class="tag auc">mint</span>`:'', x.chain&&!(x.buy&&x.buy.p.chain===x.chain&&x.platform)?`<span class="tag">${esc(x.chain)}</span>`:'',
-    x._gem?`<span class="tag gem">gem</span>`:'', x._acs?`<span class="tag">${esc(x._acs)}</span>`:'' ].join('');
+    x._gem?`<span class="tag gem">gem</span>`:'', x._acs?`<span class="tag">${esc(x._acs)}</span>`:'', x._st?`<span class="tag${x._st==='sold'?' sold':''}">${esc(x._st)}</span>`:'' ].join('');
 }
-function btnOf(x){ return x.buy ? `<a class="buy" href="${esc(x.buy.url)}" target="_blank" rel="noopener">collect on ${esc(x.buy.p.name)} ↗</a>`
+function btnOf(x){ if(x.buy&&(x._st||x._acs==='not listed')) return `<a class="buy ghost" href="${esc(x.buy.url)}" target="_blank" rel="noopener">view on ${esc(x.buy.p.name)} ↗︎</a>`; return x.buy ? `<a class="buy" href="${esc(x.buy.url)}" target="_blank" rel="noopener">collect on ${esc(x.buy.p.name)} ↗</a>`
                                 : `<a class="buy ghost" href="${esc(x.url)}" target="_blank" rel="noopener">${x.src==='oz'?'view on objkt.social':'view on x'} ↗</a>`; }
 function whoOf(x,extra=''){ return `<a class="who" href="${esc(x.author.home||('https://x.com/'+x.author.username))}" target="_blank" rel="noopener">
       <img src="${esc(x.author.avatar||OZAV)}" alt="" loading="lazy">
@@ -1049,11 +1053,22 @@ function card(x){
 window.pxRefresh=()=>{ S.els.clear(); render(); };
 function elFor(x,i){ let el=S.els.get(x.id); if(!el){ el=card(x); el.style.animationDelay=Math.min(i,24)*22+'ms'; S.els.set(x.id,el); } return el; }
 
+
+/* sold vs not listed (2026-11-20 lab): one objkt GraphQL call per 40 objkt cards; also feeds the for sale filter */
+const OKQ=[]; let okBusy=0;
+function okId(x){ try{ const u=new URL(x.buy.url); if(!/(^|\.)objkt\.com$/i.test(u.hostname)) return null; const m=u.pathname.match(/^\/(?:tokens|asset)\/(KT1[1-9A-HJ-NP-Za-km-z]{33})\/(\d{1,40})/); return m?[m[1],m[2]]:null; }catch(_){ return null; } }
+function okFill(){ (S.items||[]).forEach(x=>{ if(x._okq||!x.buy) return; const t=okId(x); if(!t) return; x._okq=1; x._ok=t; OKQ.push(x); }); okNext(); }
+function okPaint(x){ const el=S.els&&S.els.get(x.id); if(!el) return; const t=el.querySelector('.tags'); if(t) t.innerHTML=tagsOf(x); const b=el.querySelector('a.buy'); if(b){ const w=document.createElement('div'); w.innerHTML=btnOf(x); b.replaceWith(w.firstChild); } }
+function okNext(){ if(okBusy||!OKQ.length) return; okBusy=1; const b=OKQ.splice(0,40), id=S.id;
+  const q='query{token(where:{_or:['+b.map(x=>'{fa_contract:{_eq:"'+x._ok[0]+'"},token_id:{_eq:"'+x._ok[1]+'"}}').join(',')+']}){fa_contract token_id lowest_ask listing_sales(limit:1){id}}}';
+  fetch('https://data.objkt.com/v3/graphql',{method:'POST',headers:{'content-type':'text/plain'},body:JSON.stringify({query:q})}).then(r=>r.json()).then(j=>{ if(S.id!==id) return; const m={}; ((j&&j.data&&j.data.token)||[]).forEach(t=>{ m[t.fa_contract+'/'+t.token_id]=t; });
+    b.forEach(x=>{ const t=m[x._ok[0]+'/'+x._ok[1]]; if(!t) return; if(t.lowest_ask!=null){ x._fs=true; x._st=''; } else { x._fs=false; x._st=(t.listing_sales&&t.listing_sales.length)?'sold':'not listed'; } okPaint(x); });
+    if(MODES[S.mode].k==='fs') render(); else setMode(S.mode,true); }).catch(()=>{}).finally(()=>{ okBusy=0; okNext(); }); }
 /* for sale (2026-11-20): real listing check via /api/price, only while "for sale" is picked; unsupported hosts fall back to the reply text */
 const FSH=/(^|\.)(objkt\.com|transient\.xyz|superrare\.com|artcollect\.io|manifold\.xyz)$/i, FSQ=[]; let fsRun=0, fsT=0;
 function fsHost(x){ try{ return x.buy&&FSH.test(new URL(x.buy.url).hostname.replace(/^www\./,'')); }catch(_){ return false; } }
 function forSale(x){ if(x._fs===true) return true; if(x._fs===false) return false; return x.sale==='buy now'||x.sale==='auction'; }
-function fsFill(){ (S.items||[]).forEach(x=>{ if(x._fsq||!fsHost(x)) return; x._fsq=1; FSQ.push(x); }); for(let i=fsRun;i<5;i++) fsNext(); fsFlash(); }
+function fsFill(){ (S.items||[]).forEach(x=>{ if(x._fsq||!fsHost(x)||x._ok) return; x._fsq=1; FSQ.push(x); }); for(let i=fsRun;i<5;i++) fsNext(); fsFlash(); }
 function fsFlash(){ const n=FSQ.length+fsRun; S.flash=n?'checking listings · '+n+' left':''; drawCount(); }
 function fsNext(){ const x=FSQ.shift(); if(!x) return; fsRun++; const id=S.id;
   fetch(SSB+'/api/price?u='+encodeURIComponent(x.buy.url)).then(r=>r.json()).then(j=>{ if(j&&j.ok) x._fs=(j.kind==='buy'||j.kind==='auction'); }).catch(()=>{}).finally(()=>{ fsRun--; if(S.id!==id) return; fsFlash(); clearTimeout(fsT); fsT=setTimeout(()=>{ if(MODES[S.mode].k==='fs') render(); else setMode(S.mode,true); }, FSQ.length+fsRun?700:50); fsNext(); }); }
@@ -1064,10 +1079,10 @@ function acNext(){ while(ACB<4&&ACQ.length){ const x=ACQ.shift(); ACB++;
   fetch(SSB+'/api/price?u='+encodeURIComponent(x.buy.url)).then(r=>r.json()).then(j=>{ if(!j||!j.ok) return;
     if(j.kind==='buy'||j.kind==='auction'){ x.price={val:j.val,cur:'XTZ',usd:j.val*(USD.XTZ||1),label:j.val+' XTZ'}; x.sale=j.kind==='auction'?'auction':'buy now'; x._acs=''; }
     else { x.price=null; x.sale=null; x._acs=j.sale==='offers'?'offers':'not listed'; }
-    const el=S.els&&S.els.get(x.id); if(el){ let t=el.querySelector('.tags'); if(!t){ t=document.createElement('div'); t.className='tags'; el.querySelector('.info').prepend(t); } t.innerHTML=tagsOf(x); }
+    const el=S.els&&S.els.get(x.id); if(el){ let t=el.querySelector('.tags'); if(!t){ t=document.createElement('div'); t.className='tags'; el.querySelector('.info').prepend(t); } t.innerHTML=tagsOf(x); const b=el.querySelector('a.buy'); if(b){ const w=document.createElement('div'); w.innerHTML=btnOf(x); b.replaceWith(w.firstChild); } }
     clearTimeout(ACT); ACT=setTimeout(()=>{ if(S.items&&S.items.length) render(false); },400); }).catch(()=>{}).finally(()=>{ ACB--; acNext(); }); } }
 function render(animate){
-  acFill(); if(MODES[S.mode]&&MODES[S.mode].k==='fs') fsFill();
+  acFill(); okFill(); if(MODES[S.mode]&&MODES[S.mode].k==='fs') fsFill();
   document.body.classList.add('loaded'); bgPlay(false);
   if(!S._k){ S._k=1; requestAnimationFrame(()=>{ setMode(S.mode,true); placeSort(); }); } else { if(!$('#track').classList.contains('drag')) setMode(S.mode,true); if(!$('#strack').classList.contains('drag')) placeSort(); }
   S.view = sorted();
@@ -1118,7 +1133,7 @@ function drawList(){
   $('#dlist').innerHTML = n ? ordr.map(k=>{ const f=S.favs[k]; return `<div class="ditem" data-id="${esc(k)}">
       <img src="${esc(f.thumb||'')}" alt="" loading="lazy">
       <div style="min-width:0"><b>${esc(f.name||f.u)}</b><span class="mono">${esc([f.plat,(p=>p.kind==='buy'?fmtc(p.cur,p.val):p.kind==='auction'?'auction '+fmtc(p.cur,p.val):(S.lp[k]&&S.lp[k].ok?'not listed':''))(eff(k)),f.ed].filter(Boolean).join(' · ')||'@'+f.u)}</span></div>
-      ${f.buy?`<a class="buy${isNL(k)?' ghost nlb':''}" href="${esc(f.buy)}" target="_blank" rel="noopener">${isNL(k)?'not listed':'collect'} ↗</a>`:`<a class="buy ghost" href="${esc(f.url)}" target="_blank" rel="noopener">x ↗</a>`}
+      ${f.buy?`<a class="buy${isNL(k)?' ghost nlb':''}" href="${esc(f.buy)}" target="_blank" rel="noopener">${isNL(k)?'view':'collect'} ↗︎</a>`:`<a class="buy ghost" href="${esc(f.url)}" target="_blank" rel="noopener">x ↗</a>`}
       <button class="rm" title="remove from list" aria-label="remove">✕</button>
     </div>`; }).join('')+(S.nlIds.length?`<button id="drnl" type="button">remove ${S.nlIds.length} not listed</button>`:'') : '<p class="mono" style="padding:30px 4px">tap ♥ on any piece to add it here.</p>';
 }
