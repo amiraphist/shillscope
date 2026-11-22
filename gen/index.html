@@ -160,7 +160,7 @@ requestAnimationFrame(frame);})();</script>
     <div class="f w"><label class="mono">description</label><textarea id="desc" rows="2"></textarea></div>
   </div>
   <textarea id="out" spellcheck="false" aria-label="your reply"></textarea>
-  <div class="outrow"><span class="mono cnt" id="cnt">0/280</span><div class="rt"><input type="hidden" id="link"><label class="tg mono"><input type="checkbox" id="wd" checked><i></i>desc</label><label class="tg mono"><input type="checkbox" id="wl" checked><i></i>link</label><label class="tg mono"><input type="checkbox" id="ws" checked><i></i>#shillscope</label><button class="btn" id="copy">copy</button></div></div>
+  <div class="outrow"><span class="mono cnt" id="cnt">0/280</span><div class="rt"><input type="hidden" id="link"><label class="tg mono"><input type="checkbox" id="wd" checked><i></i>desc</label><label class="tg mono"><input type="checkbox" id="wl" checked><i></i>link</label><label class="tg mono"><input type="checkbox" id="ws" checked><i></i>#shillscope</label><label class="tg mono"><input type="checkbox" id="wg"><i></i>gm</label><button class="btn" id="copy">copy</button></div></div>
   </div>
   <div id="art" hidden><div class="pv"><img id="img" alt=""><video id="vid" muted loop playsinline autoplay hidden></video></div>
     <div class="acts"><button class="btn sm" id="cimg">copy image</button><a class="btn sm" id="dimg" href="#">download</a></div></div>
@@ -169,11 +169,12 @@ requestAnimationFrame(frame);})();</script>
 </main>
 <script>
 const $=s=>document.querySelector(s), F=['title','coll','sale','price','cur','desc','link']; let IMG='';
+const GMS=['good morning friends ✨','gm gm ☀️','gm frens 🖤','gm, art lovers ☕️','wagmi, gm 🌞']; let GM=''; const rollGM=()=>{ let n; do{ n=GMS[Math.floor(Math.random()*GMS.length)]; }while(n===GM&&GMS.length>1); GM=n; }; rollGM();
 function compose(){ const v={}; F.forEach(k=>v[k]=$('#'+k).value.trim());
   const L=[]; if(v.title) L.push('· Name: '+v.title); if(v.coll) L.push('· Collection: '+v.coll);
   const pr=[v.price?v.price+' '+v.cur:'', v.sale].filter(Boolean).join(' · '); if(pr) L.push('· Price: '+pr);
   if(v.desc&&$('#wd').checked) L.push('· Description: '+v.desc.replace(/\s*\n+\s*/g,' '));
-  let o=L.join('\n'); if(v.link&&$('#wl').checked) o+=(o?'\n\n':'')+'Link: '+v.link; if(o&&$('#ws').checked) o+='\n\n#shillscope'; $('#out').value=o; count(); }
+  let o=L.join('\n'); if(v.link&&$('#wl').checked) o+=(o?'\n\n':'')+'Link: '+v.link; if(o&&$('#ws').checked) o+='\n\n#shillscope'; if(o&&$('#wg').checked) o=GM+'\n\n'+o; $('#out').value=o; count(); }
 function count(){ const t=$('#out').value.replace(/https?:\/\/\S+/g,'x'.repeat(23)); const n=[...t].length, c=$('#cnt'); c.textContent=n+'/280'; c.classList.toggle('over',n>280); }
 $('#out').addEventListener('input',count);
 const A=window.SSB||location.origin;
@@ -214,7 +215,7 @@ $('#f').onsubmit=async e=>{ e.preventDefault(); const url=$('#u').value.trim(); 
   }catch(_){ $('#err').textContent='something went wrong. try again.'; }
   $('#go').disabled=false; $('#go').textContent='gen'; };
 $('#wl').addEventListener('change',compose); $('#dimg').addEventListener('click',()=>{ if(IMG) hit('gd'); });
-{ const q=new URLSearchParams(location.search).get('url'); if(q){ $('#u').value=q; $('#f').requestSubmit?$('#f').requestSubmit():$('#go').click(); } } $('#wd').addEventListener('change',compose); { const w=$('#ws'); if(localStorage.getItem('ss_ws')==='0') w.checked=false; w.addEventListener('change',()=>{ try{localStorage.setItem('ss_ws',w.checked?'1':'0')}catch(e){} compose(); }); }
+{ const q=new URLSearchParams(location.search).get('url'); if(q){ $('#u').value=q; $('#f').requestSubmit?$('#f').requestSubmit():$('#go').click(); } } $('#wd').addEventListener('change',compose); { const w=$('#wg'); if(localStorage.getItem('ss_wg')==='1') w.checked=true; w.addEventListener('change',()=>{ try{localStorage.setItem('ss_wg',w.checked?'1':'0')}catch(e){} if(w.checked) rollGM(); compose(); }); $('#f').addEventListener('submit',()=>rollGM(),true); } { const w=$('#ws'); if(localStorage.getItem('ss_ws')==='0') w.checked=false; w.addEventListener('change',()=>{ try{localStorage.setItem('ss_ws',w.checked?'1':'0')}catch(e){} compose(); }); }
 $('#copy').onclick=()=>{ const t=$('#out').value; if(!t) return; hit('gt'); (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).catch(()=>{ $('#out').select(); document.execCommand('copy'); });
   const b=$('#copy'); b.textContent='copied'; b.classList.add('ok'); setTimeout(()=>{ b.textContent='copy'; b.classList.remove('ok'); },1400); };
 </script>
