@@ -1530,14 +1530,14 @@ refresh(true);
 #ring{width:min(1100px,100%);margin:0 auto 1.2vh;opacity:0;transition:opacity 1.2s}#ring.on{opacity:1}body.loaded #ring{display:none}
 </style>
 <script>/* ssRing engine (2026-11-23): rows of artwork cards on turning rings, seen in perspective, soft reflection. Shared by the landing ring and the dashboard preview. */
-var SSR_DEF={x:-18,z:0,cx:0,d:1500,s:100,w:100,h:100,sh:'r',rows:1};
+var SSR_DEF={x:-18,z:0,cx:0,d:1500,s:100,w:100,h:100,sh:'r',rows:1,mo:'c'};
 function ssRing(R,o){
  var DEF=SSR_DEF;
  function esc(x){return String(x==null?'':x).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
  R.classList.add('ssr');R.innerHTML='<div class="fl"></div><div class="rws"></div>'+(o.ticker?'<div class="tk" aria-hidden="true"><div></div></div>':'');
  var RW=R.querySelector('.rws'),FL=R.querySelector('.fl'),TK=o.ticker?R.querySelector('.tk div'):null,tkw=0,items=[],C=Object.assign({},DEF),rows=[],built='',
-  rot=0,vel=0,down=null,moved=0,tgt=null,last=performance.now(),vis=true,alive=true,W=0,H=0,rad=0,N=12,AUTO=9,red=matchMedia('(prefers-reduced-motion: reduce)').matches;
- function norm(c){c=Object.assign({},DEF,c||{});c.rows=Math.max(1,Math.min(3,+c.rows||1));if(['r','s','c','h'].indexOf(c.sh)<0)c.sh='r';return c}
+  rot=0,vel=0,down=null,moved=0,tgt=null,last=performance.now(),vis=true,alive=true,W=0,H=0,rad=0,N=12,AUTO=9,sT=null,sW=0,red=matchMedia('(prefers-reduced-motion: reduce)').matches;
+ function norm(c){c=Object.assign({},DEF,c||{});c.rows=Math.max(1,Math.min(3,+c.rows||1));if(['r','s','c','h'].indexOf(c.sh)<0)c.sh='r';if(c.mo!=='p')c.mo='c';return c}
  function build(){var key=items.length+':'+C.rows+':'+items.map(function(x){return x.id||x.img}).join(',');if(key===built)return;built=key;
   N=Math.max(12,Math.min(18,items.length||12));RW.innerHTML='';rows=[];
   for(var r=0;r<C.rows;r++){var st=document.createElement('div');st.className='st';var h='';
@@ -1559,10 +1559,12 @@ function ssRing(R,o){
    r.cards.forEach(function(c){var w=((c.a+rot+ro)%360+360)%360,k=Math.cos(w*Math.PI/180);c.el.style.opacity=(.16+.84*Math.pow(Math.max(0,k),1.4)).toFixed(3);c.k=k;c.w=w;if(c.vd){var on=vis&&!document.hidden&&k>.55;if(on&&!c.vd.src){c.vd.src=c.vd.getAttribute('data-src')}if(on&&c.vd.paused){var p=c.vd.play();if(p&&p.catch)p.catch(function(){})}else if(!on&&!c.vd.paused)c.vd.pause()}})});
   if(TK&&tkw){var off=((-rot*2.2)%tkw+tkw)%tkw;TK.style.transform='translateX('+(-tkw+off).toFixed(1)+'px)'}}
  function tick(t){if(!alive)return;var dt=Math.min(.05,(t-last)/1000);last=t;
-  if(vis&&!document.hidden&&rows.length){if(tgt!=null){var d=((tgt-rot)%360+540)%360-180;rot+=d*Math.min(1,dt*5);if(Math.abs(d)<.2){rot=tgt;tgt=null}}
-   else if(!down){vel+=((red?0:-AUTO)-vel)*Math.min(1,dt*1.6);rot+=vel*dt}paint()}
+  if(vis&&!document.hidden&&rows.length){if(tgt!=null){var d=((tgt-rot)%360+540)%360-180;rot+=d*Math.min(1,dt*5);if(Math.abs(d)<.2){rot=tgt;tgt=null;sT=null}}
+   else if(!down){if(C.mo==='p'&&!red){var sp=360/N;if(sT==null){sT=Math.round(rot/sp)*sp;sW=t+1600}
+     if(sW&&t>sW){sT-=sp;sW=0}var ac=90*(sT-rot)-11*vel;vel+=ac*dt;rot+=vel*dt;if(!sW&&Math.abs(sT-rot)<.15&&Math.abs(vel)<2)sW=t+1800}
+    else{sT=null;vel+=((red?0:-AUTO)-vel)*Math.min(1,dt*1.6);rot+=vel*dt}}paint()}
   requestAnimationFrame(tick)}
- R.addEventListener('pointerdown',function(e){down={x:e.clientX,r:rot,t:performance.now()};moved=0;tgt=null;R.classList.add('dn')},{passive:true});
+ R.addEventListener('pointerdown',function(e){down={x:e.clientX,r:rot,t:performance.now()};moved=0;tgt=null;sT=null;R.classList.add('dn')},{passive:true});
  function mv(e){if(!down||!alive)return;var dx=e.clientX-down.x;if(Math.abs(dx)>5)moved=1;var nr=down.r+dx*(innerWidth<820?.45:.22);vel=(nr-rot)/Math.max(.008,(performance.now()-(down.lt||down.t))/1000);down.lt=performance.now();rot=nr}
  function up(){if(!down)return;down=null;R.classList.remove('dn');vel=Math.max(-300,Math.min(300,vel))}
  addEventListener('pointermove',mv,{passive:true});addEventListener('pointerup',up);addEventListener('pointercancel',up);
