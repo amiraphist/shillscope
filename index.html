@@ -1255,9 +1255,20 @@ $('#f').onsubmit=e=>{
   e.preventDefault(); $('#err').textContent='';
   const id=parseId($('#u').value); if(!id&&genSite($('#u').value)){ location.href='/gen/?url='+encodeURIComponent($('#u').value.trim()); return; } if(!id){ $('#err').textContent='paste an x.com or objkt.social thread link'; return; }
   Object.assign(S,{id,root:null,items:[],next:null,pages:0,total:0,ft:0,flash:'',moreBusy:false,morePending:false}); S.els.clear(); S.filters.clear(); $('#root').innerHTML='';
-  try{ const q='?t='+id+(DEMO&&location.protocol!=='file:'?'&demo':''); (location.search.includes('t=')?history.replaceState:history.pushState).call(history,{t:id},'',q); }catch(_){}
-  load();
+  if(TPI()!==id){ try{ const q=(location.protocol==='file:'?'':'/')+'?t='+id+(DEMO&&location.protocol!=='file:'?'&demo':''); ((location.search.includes('t=')||TPI())?history.replaceState:history.pushState).call(history,{t:id},'',q); }catch(_){} }
+  Promise.resolve(load()).then(()=>{ if(S.id===id&&S.items.length) tSwap(id); });
 };
+/* 2026-11-24: /t/<id>/ = thread page with link preview. Once it exists, show it in the address bar (no reload). */
+function TPI(){ const m=location.pathname.match(/^\/t\/(\d{5,25})\/?$/); return m?m[1]:null; }
+let tSw=0;
+function tSwap(id){ if(!/^\d{5,25}$/.test(id)||DEMO||location.protocol==='file:') return;
+  const tok=++tSw, t0=Date.now(), base=location.hostname==='shillscope.art'?'':'https://shillscope.art';
+  const ok=()=>tok===tSw&&S.id===id&&!TPI()&&new URLSearchParams(location.search).get('t')===id;
+  const again=()=>{ if(ok()&&Date.now()-t0<24e4) setTimeout(chk,2e4); };
+  const chk=()=>{ if(!ok()) return; fetch(base+'/t/'+id+'/?c='+Date.now(),{method:'HEAD',cache:'no-store'}).then(r=>{ if(!ok()) return;
+    if(r.ok){ try{ history.replaceState(history.state,'','/t/'+id+'/'+location.hash); }catch(_){} } else again(); }).catch(again); };
+  chk();
+}
 function goHome(push){
   if(S.layout==='feed') setLayout('masonry');
   close(); $('#drawer').classList.remove('open'); $('#morepop').classList.remove('open');
@@ -1265,11 +1276,11 @@ function goHome(push){
   $('#gal').innerHTML=''; $('#root').innerHTML=''; $('#count').innerHTML=''; $('#u').value=''; $('#err').textContent='';
   $('#more').hidden=true; $('#empty').hidden=true; $('#cl').hidden=true; $('#prog').style.width='0';
   document.body.classList.remove('loaded'); bgPlay(true); window.scrollTo(0,0);
-  if(push!==false){ try{ history.pushState(null,'',location.pathname+(DEMO&&location.protocol!=='file:'?'?demo':'')); }catch(_){} }
+  if(push!==false){ try{ history.pushState(null,'',(TPI()?'/':location.pathname)+(DEMO&&location.protocol!=='file:'?'?demo':'')); }catch(_){} }
   setTimeout(()=>$('#u').focus(),50);
 }
 $('h1').onclick=()=>goHome();
-window.addEventListener('popstate',()=>{ const t=new URLSearchParams(location.search).get('t');
+window.addEventListener('popstate',()=>{ const t=new URLSearchParams(location.search).get('t')||TPI();
   if(!t) goHome(false); else if(t!==S.id){ $('#u').value=OZU(t); $('#f').requestSubmit(); } });
 $('#layout').onclick=e=>{ const l=e.target.dataset.l; if(l) setLayout(l); };
 
@@ -1277,7 +1288,7 @@ $('#more').onclick=()=>{ S.pages=0; load(); };
 /* auto load more (2026-11-05): when the load-more button scrolls into view, fetch the next batch; button stays as fallback */
 if('IntersectionObserver' in window) new IntersectionObserver(es=>{ if(es[0].isIntersecting && S.next && !S.loading && !$('#more').hidden){ S.pages=0; load(); } },{rootMargin:'600px 0px'}).observe($('#more'));
 drawSorts(); setMode(0,true);
-const pre=new URLSearchParams(location.search).get('t'); if(pre){ $('#u').value=OZU(pre); const goPre=()=>$('#f').requestSubmit(); document.readyState==='loading'?document.addEventListener('DOMContentLoaded',goPre):goPre(); }
+const pre=new URLSearchParams(location.search).get('t')||TPI(); if(pre){ $('#u').value=OZU(pre); const goPre=()=>$('#f').requestSubmit(); document.readyState==='loading'?document.addEventListener('DOMContentLoaded',goPre):goPre(); }
 
 /* ================= demo data (file:// or ?demo) ================= */
 function demoPage(){
