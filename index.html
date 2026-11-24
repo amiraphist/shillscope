@@ -1527,7 +1527,7 @@ refresh(true);
 .ssr .tk span{padding:0 18px}.ssr .tk b{font-weight:500;color:#e6e6e6}.ssr .tk i{font-style:normal;color:#e0242b;padding-left:18px}
 [data-theme=light] .ssr .tk div{color:#666}[data-theme=light] .ssr .tk b{color:#111}[data-theme=light] .ssr .f{box-shadow:0 0 0 1px rgba(0,0,0,.08)}
 @media (max-width:820px){.ssr .tk div{font-size:9.5px}.ssr .tk span{padding:0 12px}.ssr .tk i{padding-left:12px}.ssr .f{border-radius:8px}.ssr .fl{height:76px}}
-#ring{width:min(1100px,100%);margin:0 auto 1.2vh;opacity:0;transition:opacity 1.2s}#ring.on{opacity:1}@media (min-width:820px){body.rg:not(.loaded) #hero{padding-top:66px}body.rg:not(.loaded) h1{font-size:calc(clamp(56px,min(10vw,12vh),120px)*var(--hs,1))}body.rg:not(.loaded) #hero .sub,body.rg:not(.loaded) #f{zoom:var(--hs,1)}}body.loaded #ring{display:none}
+#ring{width:min(1100px,100%);margin:0 auto 1.2vh;opacity:0;transition:opacity 1.2s}#ring.on{opacity:1}@media (min-width:820px){body.rg:not(.loaded) #hero{padding-top:66px}body.rg:not(.loaded) h1{font-size:calc(clamp(56px,min(10vw,12vh),120px)*var(--hs,1))}body.rg:not(.loaded) #f{zoom:max(.88,var(--hs,1))}}body.loaded #ring{display:none}
 
 .ssz{position:fixed;inset:0;z-index:9999;-webkit-tap-highlight-color:transparent}
 .ssz .zb{position:absolute;inset:0;background:rgba(6,6,7,.72);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
@@ -1617,7 +1617,7 @@ fetch((window.SSB||'')+'/api/slider').then(function(r){return r.json()}).then(fu
 var R=document.createElement('div');R.id='ring';R.setAttribute('aria-label','picked artworks');h1.parentNode.insertBefore(R,h1);
 var CFA=null,mob=function(){return innerWidth<820};var K=.45;
 /* desktop: when the ring is on and the hero runs past the screen, tighten logo/gaps then give the ring less height, so everything fits the first screen */
-function fit(){var b=document.body,hero=document.getElementById('hero'),hs=1;b.classList.toggle('rg',!mob());K=.45;b.style.setProperty('--hs',1);if(mob()||!hero){pick();return}pick();var n=0;(function st(){requestAnimationFrame(function(){requestAnimationFrame(function(){var ov=hero.scrollHeight-innerHeight;if(ov>2&&n++<10){var h=hero.querySelector('h1'),f=document.getElementById('f'),sb=hero.querySelector('.sub'),T=(h?h.offsetHeight:0)+(f?f.offsetHeight*hs:0)+(sb?sb.offsetHeight*hs:0);if(hs>.45){hs=Math.max(.45,hs-ov/Math.max(T,1)*.9-.01);b.style.setProperty('--hs',hs)}else if(K>.24){K=Math.max(.24,K-ov/innerHeight-.01);pick()}else return;st()}})})})()}
+function fit(){var b=document.body,hero=document.getElementById('hero'),hs=1;b.classList.toggle('rg',!mob());K=.45;b.style.setProperty('--hs',1);if(mob()||!hero){pick();return}pick();var n=0;(function st(){requestAnimationFrame(function(){requestAnimationFrame(function(){var ov=hero.scrollHeight-innerHeight;if(ov>2&&n++<10){var h=hero.querySelector('h1'),f=document.getElementById('f'),sb=hero.querySelector('.sub'),T=(h?h.offsetHeight:0)+(f?f.offsetHeight*hs:0)+(sb?sb.offsetHeight*hs:0);if(hs>.72){hs=Math.max(.72,hs-ov/Math.max(T,1)*.9-.01);b.style.setProperty('--hs',hs)}else if(K>.24){K=Math.max(.24,K-ov/innerHeight-.01);pick()}else return;st()}})})})()}
 
 var E=ssRing(R,{ticker:true,links:true,intro:true,price:(window.SSB||''),maxH:function(){return innerHeight*(mob()?.32:K)},base:function(){return mob()?(innerHeight<700?{cw:62,ch:78,pf:.6}:{cw:72,ch:90,pf:.6}):{cw:140,ch:176,pf:1}}});
 function pick(){if(CFA)E.cfg(mob()?CFA.mb:CFA.dt)}
