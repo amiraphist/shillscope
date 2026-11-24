@@ -1606,7 +1606,8 @@ function ssRing(R,o){
  function zClose(){if(!ZO||ZO.tk!==1)return;var Z=ZO;Z.tk=2;
   spr(Z.p,0,190,26,Z.st,function(){Z.c.el.style.visibility='';Z.z.remove();ZO=null;last=performance.now();sW=performance.now()+900})}
  addEventListener('keydown',function(e){if(e.key==='Escape')zClose()});
- ['wheel','touchstart','touchmove'].forEach(function(t){R.addEventListener(t,function(e){if(t!=='wheel'||Math.abs(e.deltaX)>Math.abs(e.deltaY))e.stopPropagation()},{passive:true})});
+ ['touchstart','touchmove'].forEach(function(t){R.addEventListener(t,function(e){e.stopPropagation()},{passive:true})});
+ R.addEventListener('wheel',function(e){if(!alive||ZO||down)return;var d=Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:e.deltaY;if(e.deltaMode===1)d*=16;else if(e.deltaMode===2)d*=innerHeight;if(!d)return;e.preventDefault();e.stopPropagation();inEnd();tgt=null;sT=null;sW=0;d=Math.max(-120,Math.min(120,d));rot-=d*.12;vel=Math.max(-300,Math.min(300,vel*.5-d*2.4))},{passive:false});
  if('IntersectionObserver' in window)new IntersectionObserver(function(es){vis=es[0].isIntersecting}).observe(R);
  function rs(){if(alive)layout()}addEventListener('resize',rs);
  requestAnimationFrame(tick);
