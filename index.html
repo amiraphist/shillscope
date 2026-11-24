@@ -1527,7 +1527,7 @@ refresh(true);
 .ssr .tk span{padding:0 18px}.ssr .tk b{font-weight:500;color:#e6e6e6}.ssr .tk i{font-style:normal;color:#e0242b;padding-left:18px}
 [data-theme=light] .ssr .tk div{color:#666}[data-theme=light] .ssr .tk b{color:#111}[data-theme=light] .ssr .f{box-shadow:0 0 0 1px rgba(0,0,0,.08)}
 @media (max-width:820px){.ssr .tk div{font-size:9.5px}.ssr .tk span{padding:0 12px}.ssr .tk i{padding-left:12px}.ssr .f{border-radius:8px}.ssr .fl{height:76px}}
-#ring{width:min(1100px,100%);margin:0 auto 1.2vh;opacity:0;transition:opacity 1.2s}#ring.on{opacity:1}body.loaded #ring{display:none}
+#ring{width:min(1100px,100%);margin:0 auto 1.2vh;opacity:0;transition:opacity 1.2s}#ring.on{opacity:1}@media (min-width:820px){body.rg:not(.loaded) #hero{padding-top:66px}body.rg:not(.loaded) h1{font-size:clamp(56px,min(10vw,12vh),120px)}}body.loaded #ring{display:none}
 
 .ssz{position:fixed;inset:0;z-index:9999;-webkit-tap-highlight-color:transparent}
 .ssz .zb{position:absolute;inset:0;background:rgba(6,6,7,.72);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
@@ -1615,11 +1615,14 @@ function ssRing(R,o){
 (function(){var h1=document.querySelector('#hero h1');if(!h1)return;
 fetch((window.SSB||'')+'/api/slider').then(function(r){return r.json()}).then(function(j){if(!j||!j.on||!(j.items||[]).length)return;
 var R=document.createElement('div');R.id='ring';R.setAttribute('aria-label','picked artworks');h1.parentNode.insertBefore(R,h1);
-var CFA=null,mob=function(){return innerWidth<820};
-var E=ssRing(R,{ticker:true,links:true,intro:true,price:(window.SSB||''),maxH:function(){return innerHeight*(mob()?.32:.45)},base:function(){return mob()?(innerHeight<700?{cw:62,ch:78,pf:.6}:{cw:72,ch:90,pf:.6}):{cw:140,ch:176,pf:1}}});
+var CFA=null,mob=function(){return innerWidth<820};var K=.45;
+/* desktop: when the ring is on and the hero runs past the screen, tighten logo/gaps then give the ring less height, so everything fits the first screen */
+function fit(){var b=document.body,hero=document.getElementById('hero');b.classList.toggle('rg',!mob());K=.45;if(mob()||!hero){pick();return}pick();var n=0;(function st(){requestAnimationFrame(function(){requestAnimationFrame(function(){var ov=hero.scrollHeight-innerHeight;if(ov>2&&K>.24&&n++<6){K=Math.max(.24,K-ov/innerHeight-.01);pick();st()}})})})()}
+
+var E=ssRing(R,{ticker:true,links:true,intro:true,price:(window.SSB||''),maxH:function(){return innerHeight*(mob()?.32:K)},base:function(){return mob()?(innerHeight<700?{cw:62,ch:78,pf:.6}:{cw:72,ch:90,pf:.6}):{cw:140,ch:176,pf:1}}});
 function pick(){if(CFA)E.cfg(mob()?CFA.mb:CFA.dt)}
 var lm=mob();addEventListener('resize',function(){if(mob()!==lm){lm=mob();pick()}});
-var g=j.cfg||{};CFA=g.dt?g:{dt:g,mb:g};pick();E.items(j.items||[])}).catch(function(){});
+var g=j.cfg||{};CFA=g.dt?g:{dt:g,mb:g};pick();E.items(j.items||[]);fit();var ho=document.getElementById('hot');if(ho&&window.MutationObserver)new MutationObserver(function(){setTimeout(fit,60)}).observe(ho,{attributes:true,attributeFilter:['hidden']});addEventListener('resize',function(){clearTimeout(fit.t);fit.t=setTimeout(fit,200)})}).catch(function(){});
 })();</script>
 
 </body>
