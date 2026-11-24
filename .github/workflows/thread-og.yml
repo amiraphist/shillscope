@@ -1,0 +1,38 @@
+name: thread-og
+on:
+  repository_dispatch:
+    types: [thread-og]
+  workflow_dispatch:
+    inputs:
+      id: {description: 'thread id', required: true}
+permissions:
+  contents: write
+  pages: write
+concurrency: {group: thread-og, cancel-in-progress: false}
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 1}
+      - run: pip install -q pillow
+      - name: build
+        env:
+          TID: ${{ github.event.client_payload.id || github.event.inputs.id }}
+        run: |
+          [[ "$TID" =~ ^[0-9]{5,25}$ ]] || { echo bad id; exit 1; }
+          python3 tools/og/mk.py "$TID"
+      - name: push
+        env:
+          TID: ${{ github.event.client_payload.id || github.event.inputs.id }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          [ -d "t/$TID" ] || exit 0
+          git config user.name amiraphist
+          git config user.email 121091731+amiraphist@users.noreply.github.com
+          git add "t/$TID"
+          git diff --cached --quiet && exit 0
+          git commit -qm "t/: $TID preview"
+          for i in 1 2 3; do git pull -q --rebase && git push -q && break; sleep 3; done
+          curl -s -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" https://api.github.com/repos/${{ github.repository }}/pages/builds || true
