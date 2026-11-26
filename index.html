@@ -556,7 +556,7 @@ html.tue h1 .so{cursor:pointer}
 <script>/* background 2: tracking lines — pointer leaves a trail of red tracking boxes joined by thin lines, with depth */
 (function(){var c=document.getElementById('trk'),x=c.getContext('2d'),W,H,D,N=[],last=null,idle=-1e4,t0=performance.now(),mx=0,my=0;
 var EV=(function(){var lab=/workers\.dev$/.test(location.hostname),p=new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit',weekday:'short'}).formatToParts(new Date()),o={};p.forEach(function(q){o[q.type]=q.value});var ymd=o.year+o.month+o.day;
- return {t200:lab||(ymd>='20261117'&&ymd<='20261122'),tue:lab||o.weekday==='Tue'}})();window.__EV=EV;
+ return {t200:false,tue:lab||o.weekday==='Tue'}})();window.__EV=EV;
 var GOLD='255,255,255',BLUE='255,255,255';
 var K=1,RED='224,36,43',TAGS=['eth','tez','shill','drop','1/1','edition','NFT','mint','list','art','artist','collector','bid','collect','sold','gm','wagmi'];
 function sz(){D=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;c.width=W*D;c.height=H*D;c.style.width=W+'px';c.style.height=H+'px';x.setTransform(D,0,0,D,0,0);K=W>=900?1.7:1;}
@@ -1573,8 +1573,8 @@ function pos(){var b=so.getBoundingClientRect();t.style.left=(b.left+b.width/2)+
 so.addEventListener('mouseenter',function(){pos();t.classList.add('on')});so.addEventListener('mouseleave',function(){t.classList.remove('on')});
 so.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();window.open('https://x.com/hashtag/TezosTuesday?f=live','_blank','noopener')},true);
 })();</script>
-<script>(function(){var t=document.getElementById('t2b');if(!t||!window.__EV||!__EV.t200)return;t.classList.add('on');var b=document.getElementById('cityb');
-function pos(){if(b&&b.offsetWidth&&innerWidth>820)t.style.left=(b.offsetLeft+b.offsetWidth+8)+'px';}pos();addEventListener('resize',pos);setTimeout(pos,600);})();</script>
+<script>/* #200tez switch: dashboard > #200tez > event (KV t2:on), replaces the NY-date gate */(function(){var t=document.getElementById('t2b');if(!t||!window.__EV)return;fetch((window.SSB||'')+'/api/t2on',{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){if(!j||!j.on)return;__EV.t200=true;t.classList.add('on');var b=document.getElementById('cityb');
+function pos(){if(b&&b.offsetWidth&&innerWidth>820)t.style.left=(b.offsetLeft+b.offsetWidth+8)+'px';}pos();addEventListener('resize',pos);setTimeout(pos,600);}).catch(function(){});})();</script>
 <style>#totop{position:fixed;right:16px;bottom:calc(max(16px,env(safe-area-inset-bottom)) + 0px);z-index:14;width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(20,20,20,.55);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0;transform:translateY(10px);pointer-events:none;transition:opacity .3s,transform .3s;padding:0}#totop.on{opacity:1;transform:none;pointer-events:auto}#totop svg{width:18px;height:18px}#totop:hover{background:rgba(224,36,43,.85)}@media(max-width:700px){#totop{width:44px;height:44px;bottom:calc(max(16px,env(safe-area-inset-bottom)) + 0px)}}</style><button id="totop" type="button" aria-label="back to top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button><script>(function(){var b=document.getElementById("totop");function u(){b.classList.toggle("on",scrollY>innerHeight*2)}addEventListener("scroll",u,{passive:true});u();b.onclick=function(){scrollTo({top:0,behavior:"smooth"})}})();</script>
 <style>
 #dtz{margin-top:auto;border-top:1px solid var(--line);padding:14px 16px max(16px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:9px;background:inherit}
