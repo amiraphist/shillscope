@@ -689,7 +689,7 @@ addEventListener('resize',pos);if(document.fonts&&document.fonts.ready)document.
 @media (prefers-reduced-motion:reduce){#wait .eye,#wait .eye i{animation:none}}</style>
 <main id="gal" class="masonry"></main>
 <div id="feed" hidden></div>
-<button id="cl" hidden>collect list <b id="cln">0</b></button>
+<button id="cl" hidden>collect <b id="cln">0</b></button>
 <div id="drawer"><div class="dhead"><b>collect list</b><span class="mono" id="dsum"></span><button class="pill" id="dclr" hidden>clear all</button><button class="pill" id="dx" aria-label="close">✕</button></div><div id="dlist"></div></div>
 <div id="empty" class="mono" hidden></div>
 <button class="pill" id="more" hidden>load more</button><p class="mono" id="morenote" hidden></p>
@@ -1150,6 +1150,7 @@ function drawList(){
       ${f.buy?`<a class="buy${isNL(k)?' ghost nlb':''}" href="${esc(f.buy)}" target="_blank" rel="noopener">${isNL(k)?'view':'collect'} ↗︎</a>`:`<a class="buy ghost" href="${esc(f.url)}" target="_blank" rel="noopener">x ↗</a>`}
       <button class="rm" title="remove from list" aria-label="remove">✕</button>
     </div>`; }).join('')+(S.nlIds.length?`<button id="drnl" type="button">remove ${S.nlIds.length} not listed</button>`:'') : '<p class="mono" style="padding:30px 4px">tap ♥ on any piece to add it here.</p>';
+  if(window.CF) CF.sync();
 }
 function priceNext(){ if(S.lbusy||!S.lq||!S.lq.length) return; const [k,u]=S.lq.shift(); S.lbusy=1;   // one at a time, platforms rate-limit bursts
   fetch(SSB+'/api/price?u='+encodeURIComponent(u)).then(r=>r.json()).then(j=>{ S.lp[k]=j&&j.ok?j:false; }).catch(()=>{ S.lp[k]=false; }).finally(()=>{ S.lbusy=0; drawList(); priceNext(); }); }
@@ -1769,5 +1770,197 @@ var lm=mob();addEventListener('resize',function(){if(mob()!==lm){lm=mob();pick()
 var g=j.cfg||{};CFA=g.dt?g:{dt:g,mb:g};pick();E.items(j.items||[]);fit();var ho=document.getElementById('hot');if(ho&&window.MutationObserver)new MutationObserver(function(){setTimeout(fit,60)}).observe(ho,{attributes:true,attributeFilter:['hidden']});addEventListener('resize',function(){clearTimeout(fit.t);fit.t=setTimeout(fit,200)})}).catch(function(){});
 })();</script>
 
+<style>/* collect list card fan v2 (lab 2026-11-26): stack of the newest 5 picks floats ABOVE the #cl button (below it in feeding mode); button reads "collect  N" */
+#cl.cf{overflow:visible}
+#cl .cfs{position:absolute;left:50%;bottom:100%;width:32px;height:50px;margin-left:-16px;pointer-events:auto;cursor:pointer;transform:translateX(var(--cfb,0px))}
+#cl .cfs .c{position:absolute;left:0;top:0;width:32px;height:40px;border-radius:5px;background:#2a2a2a;border:1px solid rgba(255,255,255,.85);box-shadow:0 2px 6px rgba(0,0,0,.35);overflow:hidden;transform-origin:50% 150%;will-change:transform;backface-visibility:hidden;pointer-events:none}
+[data-theme=light] #cl .cfs .c{background:#dcdbd6;border-color:#fff;box-shadow:0 2px 7px rgba(0,0,0,.22)}
+#cl.fo .cfs .c{pointer-events:auto}
+#cl .cfs .c img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .25s}
+#cl .cfs .c img.ok{opacity:1}
+#cl .cfc{position:absolute;right:0;bottom:calc(100% + 150px);max-width:230px;padding:7px 11px;border-radius:12px;background:rgba(14,14,14,.9);border:.5px solid rgba(255,255,255,.16);box-shadow:0 8px 24px rgba(0,0,0,.35);color:#fff;text-shadow:none;text-align:left;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .18s;font-weight:400}
+#cl.fo .cfc{opacity:1}
+#cl .cfc b{display:block;font-size:12.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;background:none;color:inherit;padding:0;margin:0;border-radius:0}
+#cl .cfc i{display:block;font:500 11px 'JetBrains Mono',monospace;font-style:normal;opacity:.75;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+[data-theme=light] #cl .cfc{background:rgba(255,255,255,.95);color:#141414;border-color:rgba(0,0,0,.1);box-shadow:0 8px 24px rgba(0,0,0,.14)}
+#cl #cln{margin-left:10px}
+@media (max-width:700px){#cl .cfs{width:28px;height:42px;margin-left:-14px}#cl .cfs .c{width:28px;height:34px}}
+body.feeding #cl .cfs{bottom:auto;top:100%;width:24px;height:36px;margin-left:-12px}
+body.feeding #cl .cfs .c{top:auto;bottom:0;width:24px;height:29px;transform-origin:50% -50%;border-radius:4px}
+body.feeding #cl .cfc{bottom:auto;top:calc(100% + 130px)}
+#totop{right:var(--tt-r,16px)!important;bottom:var(--tt-b,max(16px,env(safe-area-inset-bottom)))!important}
+</style>
+<script>/* collect list card fan (lab 2026-11-26) */
+(function(){
+'use strict';
+var cl=document.getElementById('cl');if(!cl||typeof S==='undefined')return;
+var RM=matchMedia('(prefers-reduced-motion: reduce)'),FINE=matchMedia('(hover:hover) and (pointer:fine)');
+var st=document.createElement('span');st.className='cfs';st.setAttribute('aria-hidden','true');
+var cap=document.createElement('span');cap.className='cfc';cap.setAttribute('aria-hidden','true');cap.innerHTML='<b></b><i></i>';
+cl.insertBefore(st,cl.firstChild);cl.appendChild(cap);
+function Sp(x,k,c){this.x=x;this.v=0;this.t=x;this.k=k;this.c=c}
+Sp.prototype.step=function(dt){var n=Math.ceil(dt/(1/240)),h=dt/n;for(var i=0;i<n;i++){this.v+=(-this.k*(this.x-this.t)-this.c*this.v)*h;this.x+=this.v*h}};
+Sp.prototype.rest=function(){return Math.abs(this.x-this.t)<.01&&Math.abs(this.v)<.1};
+Sp.prototype.snap=function(){this.x=this.t;this.v=0};
+var cards=[],by={},open=false,pulse=0,hov=-1,raf=0,last=0;
+function mk(k,f){var el=document.createElement('span');el.className='c';var im=document.createElement('img');im.alt='';im.decoding='async';im.draggable=false;im.loading='eager';
+ im.onload=function(){im.classList.add('ok')};im.onerror=function(){im.remove()};if(f.thumb)im.src=f.thumb;el.appendChild(im);
+ var o={k:k,el:el,r:new Sp(0,170,17),x:new Sp(0,170,17),y:new Sp(0,170,17),s:new Sp(1,260,22)};
+ el.addEventListener('pointerenter',function(e){if(e.pointerType==='mouse'&&open){hov=cards.indexOf(o);aim()}});
+ el.addEventListener('pointerleave',function(e){if(e.pointerType==='mouse'&&hov===cards.indexOf(o)){hov=-1;aim()}});
+ return o}
+function fmt(c,v){return c==='USD'?'$'+(+(+v).toFixed(2)):(+(+v).toFixed(4))+' '+String(c).toLowerCase()}
+function price(k){var f=S.favs[k],l=S.lp&&S.lp[k];if(!f)return '';
+ if(l&&l.ok){if(l.kind==='buy'&&l.cur)return fmt(l.cur,l.val);if(l.kind==='auction')return 'auction '+fmt(l.cur,l.val);return 'not listed'}
+ return f.price&&f.price.cur?fmt(f.price.cur,f.price.val):''}
+function title(k){var f=S.favs[k]||{},l=S.lp&&S.lp[k],x=(S.items||[]).find(function(i){return i.id===k});
+ var t=(l&&l.ok&&l.t)||(x&&x._nt)||'';if(!t&&x&&typeof shortTxt==='function')t=(shortTxt(x).split('\n')[0]||'').slice(0,60);return t||f.name||'untitled'}
+function pose(i,n){var d=n-1-i,dir=document.body.classList.contains('feeding')?-1:1;
+ if(open||pulse){var u=n>1?i/(n-1)-.5:0,A=Math.min(64,17*(n-1));
+  if(pulse&&!open)return{r:u*A*.45*dir,x:u*14,y:0,s:1};
+  var fine=cl.offsetHeight<40?1.9:2.2;
+  return{r:u*A*dir,x:u*44,y:dir*(Math.abs(u)*10-10-(hov===i?14:0)),s:fine*(hov===i?1.08:1)}}
+ if(!d)return{r:0,x:0,y:0,s:1};
+ var sg=d%2?-1:1;return{r:sg*(3+d*2.2)*dir,x:sg*1.4,y:0,s:1-d*.035}}
+function bias(){if(!open||document.body.classList.contains('feeding'))return 0;var r=cl.getBoundingClientRect(),cx=(r.left+r.right)/2,room=innerWidth-cx-12;return Math.min(0,room-120)}
+function aim(){var n=cards.length,t=performance.now();st.style.setProperty('--cfb','0px');var B=bias();
+ for(var i=0;i<n;i++){var c=cards[i],p=pose(i,n);p.x+=B;c.pend=p;c.at=RM.matches?t:t+(open?(n-1-i)*28:i*22);c.el.style.zIndex=hov===i?20:i}
+ caption();kick()}
+function caption(){var b=cap.firstChild,i=cap.lastChild;
+ if(open&&hov>=0&&cards[hov]){var k=cards[hov].k,f=S.favs[k]||{};b.textContent=title(k);i.textContent=['@'+(f.u||''),price(k)].filter(function(s){return s&&s!=='@'}).join(' \u00b7 ')}
+ else{var n=Object.keys(S.favs).length,ds=document.getElementById('dsum');b.textContent='collect list';i.textContent=(ds&&ds.textContent)||(n+' piece'+(n===1?'':'s'))}}
+function kick(){if(!raf){last=0;raf=requestAnimationFrame(loop)}}
+function loop(t){raf=0;var dt=Math.min(.1,last?(t-last)/1000:1/60);last=t;var busy=false;
+ for(var i=0;i<cards.length;i++){var c=cards[i];
+  if(c.pend&&t>=c.at){c.r.t=c.pend.r;c.x.t=c.pend.x;c.y.t=c.pend.y;c.s.t=c.pend.s;c.pend=null;if(RM.matches){c.r.snap();c.x.snap();c.y.snap();c.s.snap()}}
+  if(c.pend)busy=true;
+  if(!(c.r.rest()&&c.x.rest()&&c.y.rest()&&c.s.rest())){c.r.step(dt);c.x.step(dt);c.y.step(dt);c.s.step(dt);busy=true}
+  c.el.style.transform='translate3d('+c.x.x.toFixed(2)+'px,'+c.y.x.toFixed(2)+'px,0) rotate('+c.r.x.toFixed(2)+'deg) scale('+c.s.x.toFixed(4)+')'}
+ if(busy){last=t;raf=requestAnimationFrame(loop)}}
+function setOpen(v){if(open===v)return;open=v;hov=-1;cl.classList.toggle('fo',v);aim()}
+cl.addEventListener('pointerenter',function(e){if(e.pointerType==='mouse'&&FINE.matches&&cards.length&&!document.getElementById('drawer').classList.contains('open'))setOpen(true)});
+cl.addEventListener('pointerleave',function(e){if(e.pointerType==='mouse')setOpen(false)});
+cl.addEventListener('click',function(){setOpen(false)},true);
+var pT=0,sig='';
+function sync(){var vis=!cl.hidden,ids=Object.keys(S.favs).sort(function(a,b){return(S.favs[b].t||0)-(S.favs[a].t||0)}).slice(0,5).reverse();
+ var added=[],keep={};
+ ids.forEach(function(k){keep[k]=1;if(!by[k]){by[k]=mk(k,S.favs[k]);added.push(by[k])}});
+ Object.keys(by).forEach(function(k){if(!keep[k]){by[k].el.remove();delete by[k]}});
+ cards=ids.map(function(k){return by[k]});cards.forEach(function(c){st.appendChild(c.el)});
+ cl.classList.toggle('cf',cards.length>0);
+ if(!cards.length&&open)setOpen(false);
+ var dir=document.body.classList.contains('feeding')?-1:1;
+ added.forEach(function(c){if(vis&&!RM.matches&&c===cards[cards.length-1]){c.r.x=-22*dir;c.x.x=16;c.y.x=-58*dir;c.s.x=1.7}
+  else{var p=pose(cards.indexOf(c),cards.length);c.r.x=c.r.t=p.r;c.x.x=c.x.t=p.x;c.y.x=c.y.t=p.y;c.s.x=c.s.t=p.s}});
+ if(added.length&&vis&&!RM.matches&&!open&&!FINE.matches&&cards.length>1){clearTimeout(pT);pulse=1;setTimeout(aim,300);pT=setTimeout(function(){pulse=0;aim()},300+520);return}
+ var g=ids.join(',')+(document.body.classList.contains('feeding')?'f':'');if(added.length||g!==sig)aim();else if(open)caption();sig=g}
+window.CF={sync:sync};sync();
+/* back-to-top sits left of the collect button (was hidden under it) */
+var tt=document.getElementById('totop'),R=document.documentElement;
+function place(){if(!tt)return;if(cl.hidden||document.body.classList.contains('feeding')){R.style.removeProperty('--tt-r');R.style.removeProperty('--tt-b');return}
+ var r=cl.getBoundingClientRect(),h=tt.offsetHeight||40;R.style.setProperty('--tt-r',Math.round(innerWidth-r.left+10)+'px');R.style.setProperty('--tt-b',Math.round(innerHeight-r.bottom+(r.height-h)/2)+'px')}
+if(window.ResizeObserver)new ResizeObserver(place).observe(cl);
+new MutationObserver(place).observe(cl,{attributes:true,attributeFilter:['hidden']});
+new MutationObserver(place).observe(document.body,{attributes:true,attributeFilter:['class']});
+addEventListener('resize',place);place();
+})();
+</script>
+<style>/* swipe to collect all (lab 2026-11-26): replaces the tap button #dtzb in the drawer; #dtzb stays (hidden) and still runs the real collect-all flow */
+#dtz.sz #dtzb{display:none!important}
+#dsw{--H:54px;--K:46px;--P:4px;position:relative;width:100%;height:var(--H);border-radius:99px;background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px rgba(255,255,255,.09),inset 0 2px 8px rgba(0,0,0,.25);overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;isolation:isolate;-webkit-mask-image:-webkit-radial-gradient(white,black);transition:opacity .25s}
+[data-theme=light] #dsw{background:rgba(0,0,0,.05);box-shadow:inset 0 0 0 1px rgba(0,0,0,.08),inset 0 2px 6px rgba(0,0,0,.06)}
+#dsw.dis{opacity:.45}#dsw.dis .kn{cursor:default}
+#dsw .fill{position:absolute;top:0;left:0;height:100%;width:100%;border-radius:99px;background:linear-gradient(90deg,rgba(31,107,240,0),rgba(31,107,240,.6) 70%,#2f80ff);will-change:transform;z-index:1;opacity:0}
+#dsw .fill::after{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(180deg,#3d8bff,#1f6bf0);opacity:0;transition:opacity .5s}
+#dsw.wait .fill::after{opacity:.9}#dsw.done .fill::after{opacity:1}
+#dsw .sheen{position:absolute;top:0;left:0;height:100%;width:40%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);z-index:2;opacity:0;transform:translateX(-120%);pointer-events:none}
+#dsw.wait .sheen{opacity:1;animation:dswsh 1.1s cubic-bezier(.45,0,.25,1) infinite}
+@keyframes dswsh{to{transform:translateX(280%)}}
+#dsw .lb{position:absolute;top:0;bottom:0;left:calc(var(--K) + var(--P));right:12px;display:flex;align-items:center;justify-content:center;z-index:2;pointer-events:none;transition:left .4s,right .4s}
+#dsw.done .lb,#dsw.wait .lb{left:12px;right:calc(var(--K) + var(--P))}
+#dsw .lb i{position:absolute;max-width:100%;overflow:hidden;text-overflow:ellipsis;font:700 14px 'Space Grotesk',system-ui,sans-serif;font-style:normal;white-space:nowrap;transition:opacity .35s,transform .45s cubic-bezier(.2,.9,.2,1);display:flex;align-items:center;gap:7px}
+#dsw .lb i.off{opacity:0;transform:translateY(8px)}#dsw .lb i.up{opacity:0;transform:translateY(-8px)}
+#dsw .lb .l0{color:var(--fg)}
+#dsw .lb .l0 s{text-decoration:none;background:linear-gradient(90deg,var(--mute) 0%,var(--mute) 40%,var(--fg) 50%,var(--mute) 60%,var(--mute) 100%);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:dswsm 2.6s linear infinite}
+#dsw.dis .lb .l0 s{animation:none;color:var(--mute)}
+@keyframes dswsm{from{background-position:100% 0}to{background-position:0 0}}
+#dsw .lb .l0::before{content:"";width:10px;height:14px;flex:none;background:#3d8bff;-webkit-mask:var(--tzm) center/contain no-repeat;mask:var(--tzm) center/contain no-repeat}
+#dsw .lb .l1,#dsw .lb .l2{color:#fff}
+#dsw .kn{position:absolute;top:var(--P);left:var(--P);width:var(--K);height:var(--K);border-radius:50%;background:#f4f4f4;color:#0a0a0a;z-index:4;display:flex;align-items:center;justify-content:center;cursor:grab;will-change:transform;box-shadow:0 4px 14px rgba(0,0,0,.35);border:0;outline:none;touch-action:none;padding:0;appearance:none}
+[data-theme=light] #dsw .kn{background:#141414;color:#fff}
+#dsw .kn:focus-visible{box-shadow:0 0 0 3px #3d8bff}
+#dsw.drag .kn{cursor:grabbing}
+#dsw .kn svg{position:absolute;width:21px;height:21px;transition:transform .45s cubic-bezier(.3,1.6,.4,1),opacity .2s}
+#dsw .kn .sp,#dsw .kn .ck{transform:scale(.2);opacity:0}
+#dsw.wait .kn .ar,#dsw.done .kn .ar{transform:scale(.2);opacity:0}
+#dsw.wait .kn .sp{transform:scale(1);opacity:1}
+#dsw.wait .kn .sp circle{animation:dswsp .9s linear infinite;transform-origin:12px 12px}
+@keyframes dswsp{to{transform:rotate(360deg)}}
+#dsw.done .kn .ck{transform:scale(1);opacity:1}
+#dsw .kn .ck path{stroke-dasharray:24;stroke-dashoffset:24;transition:stroke-dashoffset .4s .1s cubic-bezier(.6,0,.2,1)}
+#dsw.done .kn .ck path{stroke-dashoffset:0}
+@media (prefers-reduced-motion:reduce){#dsw .sheen,#dsw .lb .l0 s{animation:none}}
+</style>
+<script>/* swipe to collect all (lab 2026-11-26) */
+(function(){
+'use strict';
+var box=document.getElementById('dtz'),b=document.getElementById('dtzb'),sp=document.getElementById('dtzs');if(!box||!b||!sp)return;
+var RM=matchMedia('(prefers-reduced-motion: reduce)');
+try{var m=getComputedStyle(b,'::before').webkitMaskImage||getComputedStyle(b,'::before').maskImage;if(m&&m!=='none')box.style.setProperty('--tzm',m)}catch(e){}
+var sw=document.createElement('div');sw.id='dsw';sw.className='dis';
+sw.innerHTML='<div class="fill"></div><div class="sheen"></div><div class="lb"><i class="l0"><s>slide to collect all</s></i><i class="l1 off">waiting for wallet\u2026</i><i class="l2 off">collected</i></div>'+
+ '<button class="kn" type="button" aria-label="slide to collect all">'+
+ '<svg class="ar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg>'+
+ '<svg class="sp" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="8" stroke-dasharray="34 60"/></svg>'+
+ '<svg class="ck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 12.5l4.2 4.2L18.5 8"/></svg></button>';
+box.insertBefore(sw,b);box.classList.add('sz');b.tabIndex=-1;b.setAttribute('aria-hidden','true');
+var kn=sw.querySelector('.kn'),fill=sw.querySelector('.fill'),ls=sw.querySelectorAll('.lb i'),l0=ls[0].firstChild,l1=ls[1],l2=ls[2];
+function Sp(x,k,c){this.x=x;this.v=0;this.t=x;this.k=k;this.c=c}
+Sp.prototype.step=function(dt){var n=Math.ceil(dt/(1/240)),h=dt/n;for(var i=0;i<n;i++){this.v+=(-this.k*(this.x-this.t)-this.c*this.v)*h;this.x+=this.v*h}};
+Sp.prototype.rest=function(){return Math.abs(this.x-this.t)<.05&&Math.abs(this.v)<.5};
+var X=new Sp(0,320,26),state='idle',drag=null,max=0,W=0,K=46,P=4,raf=0,last=0,tm=0;
+function measure(){W=sw.clientWidth;K=kn.offsetWidth||46;P=kn.offsetTop||4;max=Math.max(0,W-K-2*P)}
+function lab(n){for(var i=0;i<ls.length;i++)ls[i].className=ls[i].className.replace(/ ?(off|up)/g,'')+(i===n?'':(i<n?' up':' off'))}
+function phase(t){t=String(t||'').toLowerCase();return /wallet/.test(t)?'waiting for wallet\u2026':(t||'waiting for wallet\u2026')}
+/* mirror the hidden button: its label + enabled state drive the swipe */
+function mirror(){if(state==='wait'){if(!/^collect all/.test(b.textContent))l1.textContent=phase(b.textContent);return}if(state!=='idle')return;
+ var t=b.textContent||'collect all',m=t.match(/collect all \u00b7 ([\d.]+ tez)(?: \((\d+)\))?/);
+ l0.textContent=m?'slide to collect all \u00b7 '+m[1]:'slide to collect all';
+ kn.setAttribute('aria-label',(m?'slide to collect all, '+m[1]+(m[2]?', '+m[2]+' pieces':''):'collect all, nothing listed yet')+'. press enter to confirm');
+ sw.classList.toggle('dis',!!b.disabled);kn.disabled=!!b.disabled}
+new MutationObserver(mirror).observe(b,{childList:true,characterData:true,subtree:true,attributes:true,attributeFilter:['disabled']});
+function setState(s){state=s;sw.classList.toggle('wait',s==='wait');sw.classList.toggle('done',s==='done');
+ if(s==='idle'){lab(0);mirror()}if(s==='wait'){l1.textContent='waiting for wallet\u2026';lab(1)}if(s==='done')lab(2)}
+function kick(){if(!raf){last=0;raf=requestAnimationFrame(loop)}}
+function loop(t){raf=0;var dt=Math.min(.05,last?(t-last)/1000:1/60);last=t;if(!W)measure();
+ if(!drag){if(RM.matches){X.x=X.t;X.v=0}else X.step(dt)}
+ var x=X.x;kn.style.transform='translate3d('+x.toFixed(2)+'px,0,0)';
+ fill.style.transform='translate3d('+(x+K+P*2-W).toFixed(2)+'px,0,0)';
+ var p=Math.max(0,Math.min(1,x/Math.max(1,max)));
+ ls[0].style.opacity=state==='idle'?Math.max(0,1-p*2.6).toFixed(3):'';
+ fill.style.opacity=state==='idle'?Math.min(1,p*5).toFixed(3):'1';
+ if(drag||!X.rest()){raf=requestAnimationFrame(loop)}else{X.x=X.t;X.v=0}}
+function back(){X.t=0;X.k=260;X.c=21;kick()}
+async function commit(){if(state!=='idle'||b.disabled)return;measure();setState('wait');X.t=max;X.k=320;X.c=24;kick();
+ if(navigator.vibrate)try{navigator.vibrate(12)}catch(e){}
+ var ok=false;
+ try{sp.className='';await (b.onclick&&b.onclick.call(b,{type:'swipe'}));ok=sp.classList.contains('ok')}catch(e){ok=false}
+ if(ok){var m=(sp.textContent||'').match(/collected (\d+)/);l2.textContent=m?'collected \u00b7 '+m[1]+' piece'+(m[1]==='1'?'':'s'):'collected';setState('done');
+  clearTimeout(tm);tm=setTimeout(function(){setState('idle');X.t=0;X.k=210;X.c=17;kick()},2400)}
+ else{setState('idle');back();if(!RM.matches){X.v=-300}}}
+function rub(raw){if(raw>max)return max+(raw-max)*.22;if(raw<0)return raw*.22;return raw}
+sw.addEventListener('pointerdown',function(e){if(state!=='idle'||b.disabled)return;if(e.target!==kn&&!kn.contains(e.target))return;
+ e.preventDefault();measure();try{sw.setPointerCapture(e.pointerId)}catch(_){}drag={id:e.pointerId,x0:e.clientX,k0:X.x,lx:e.clientX,lt:e.timeStamp,v:0};sw.classList.add('drag');kick()});
+sw.addEventListener('pointermove',function(e){if(!drag||e.pointerId!==drag.id)return;var dtm=Math.max(1,e.timeStamp-drag.lt);
+ drag.v=drag.v*.6+((e.clientX-drag.lx)/dtm)*.4;drag.lx=e.clientX;drag.lt=e.timeStamp;var x=rub(drag.k0+e.clientX-drag.x0);X.x=x;X.t=x;X.v=0});
+function up(e){if(!drag||e.pointerId!==drag.id)return;sw.classList.remove('drag');var v=drag.v*1000;drag=null;X.v=v;
+ if(X.x>=max*.88||(X.x>max*.55&&v>700))commit();else back()}
+sw.addEventListener('pointerup',up);sw.addEventListener('pointercancel',up);
+kn.addEventListener('keydown',function(e){if(state==='idle'&&(e.key==='Enter'||e.key===' '||e.key==='ArrowRight')){e.preventDefault();X.v=900;commit()}});
+kn.addEventListener('click',function(e){e.preventDefault()});
+addEventListener('resize',function(){measure();if(state!=='idle'){X.t=max}kick()});
+setState('idle');window.__dsw={commit:commit,state:function(){return state}};
+})();
+</script>
 </body>
 </html>
