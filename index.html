@@ -139,6 +139,7 @@ select{cursor:pointer}
 .tag{font-size:12px;border:1px solid #2a2a2a;border-radius:7px;padding:2px 7px;color:#cfcfcf}
 .tag.price{color:#fff;border-color:#444}
 .tag.plat{color:var(--fg);background:#1a1a1a}
+.txt.nt{color:var(--fg);font-weight:600;-webkit-line-clamp:1}
 .txt{font-size:13px;line-height:1.5;color:#aaa;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
 .stats{display:flex;gap:12px}
 .buy{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 12px;border-radius:7px;font-size:13px;font-weight:500;background:var(--fg);color:#000;transition:background .2s,color .2s}
@@ -718,7 +719,7 @@ const PLATFORMS = [
   ['mint.fun','mint.fun',null],['sound.xyz','Sound','ETH'],['async.art','Async','ETH'],['art.art','Art.art',null],['deca.art','Deca',null],
   ['oncyber.io','oncyber',null],['scatter.art','Scatter','ETH'],['showtime.xyz','Showtime',null],['rodeo.club','Rodeo','Base'],['vv.xyz','VV','ETH'],
   ['lazy.com','Lazy',null],['hic.art','HEN','Tezos'],['versum.xyz','Versum','Tezos'],['8bidou.com','8bidou','Tezos'],['ronin','Ronin',null],
-  ['artcollect.io','ArtCollect','Tezos'],
+  ['artcollect.io','ArtCollect','Tezos'],['aleatory.art','aleatory','Tezos'],
   ['ipfs.io','IPFS',null],['etherscan.io','Etherscan','ETH'],['basescan.org','Basescan','Base'],
 ];
 function platformOf(url){
@@ -809,7 +810,7 @@ const ago = d => { const s=(Date.now()-new Date(d))/1e3; return s<3600?Math.max(
 const OZAV="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='20' fill='%23333'/%3E%3Ccircle cx='20' cy='20' r='7' fill='none' stroke='%23e33' stroke-width='3'/%3E%3C/svg%3E";
 function OZU(t){ const o=String(t).match(/^o~(.+)~([a-z0-9]+)$/i); return o?'https://objkt.com/social/'+o[1]+'/'+o[2]:'https://x.com/i/status/'+t; }
 function parseId(v){ const o=(v||'').trim().match(/^(?:https?:\/\/)?(?:www\.)?objkt\.com\/social\/([A-Za-z0-9][A-Za-z0-9.\-]{1,250})\/([a-z0-9]{6,20})(?:[\/?#].*)?$/i)||(v||'').trim().match(/^o~([A-Za-z0-9][A-Za-z0-9.\-]{1,250})~([a-z0-9]{6,20})$/i); if(o) return 'o~'+o[1].toLowerCase()+'~'+o[2]; const m=(v||'').trim().match(/^(?:https?:\/\/)?(?:(?:www|mobile)\.)?(?:x|twitter)\.com\/(?:[A-Za-z0-9_]{1,15}|i(?:\/web)?)\/status(?:es)?\/(\d{5,25})(?:[\/?#].*)?$/i); return m&&m[1]; }
-const GEN_SITES = /^(?:www\.)?(?:superrare\.com|transient\.xyz|objkt\.com|(?:[\w-]+\.)*manifold\.xyz)$/i;
+const GEN_SITES = /^(?:www\.)?(?:superrare\.com|transient\.xyz|objkt\.com|aleatory\.art|(?:[\w-]+\.)*manifold\.xyz)$/i;
 function genSite(v){ try{ const u=new URL((v||'').trim()); return /^https?:$/.test(u.protocol) && GEN_SITES.test(u.hostname); }catch(_){ return false; } }
 /* a gif only counts as art when the reply links the piece; at most 2 replies per account */
 const PER_ACCOUNT = 2;
@@ -1041,7 +1042,7 @@ function card(x){
     </div>
     <div class="info">
       ${tags?`<div class="tags">${tags}</div>`:''}
-      ${shortTxt(x)?`<p class="txt" title="${esc(shortTxt(x))}">${esc(shortTxt(x))}</p>`:''}
+      ${x._nt?`<p class="txt nt">${esc(x._nt)}</p>`:''}${shortTxt(x)?`<p class="txt" title="${esc(shortTxt(x))}">${esc(shortTxt(x))}</p>`:''}
       ${statsOf(x)}
       ${btnOf(x)}
     </div>`;
@@ -1065,7 +1066,7 @@ function okNext(){ if(okBusy||!OKQ.length) return; okBusy=1; const b=OKQ.splice(
     b.forEach(x=>{ const t=m[x._ok[0]+'/'+x._ok[1]]; if(!t) return; if(t.lowest_ask!=null){ x._fs=true; x._st=''; } else { x._fs=false; x._st=(t.listing_sales&&t.listing_sales.length)?'sold':'not listed'; } okPaint(x); });
     if(MODES[S.mode].k==='fs') render(); else setMode(S.mode,true); }).catch(()=>{}).finally(()=>{ okBusy=0; okNext(); }); }
 /* for sale (2026-11-20): real listing check via /api/price, only while "for sale" is picked; unsupported hosts fall back to the reply text */
-const FSH=/(^|\.)(objkt\.com|transient\.xyz|superrare\.com|artcollect\.io|manifold\.xyz)$/i, FSQ=[]; let fsRun=0, fsT=0;
+const FSH=/(^|\.)(objkt\.com|transient\.xyz|superrare\.com|artcollect\.io|manifold\.xyz|aleatory\.art)$/i, FSQ=[]; let fsRun=0, fsT=0;
 function fsHost(x){ try{ return x.buy&&FSH.test(new URL(x.buy.url).hostname.replace(/^www\./,'')); }catch(_){ return false; } }
 function forSale(x){ if(x._fs===true) return true; if(x._fs===false) return false; return x.sale==='buy now'||x.sale==='auction'; }
 function fsFill(){ (S.items||[]).forEach(x=>{ if(x._fsq||!fsHost(x)||x._ok) return; x._fsq=1; FSQ.push(x); }); for(let i=fsRun;i<5;i++) fsNext(); fsFlash(); }
@@ -1081,8 +1082,21 @@ function acNext(){ while(ACB<4&&ACQ.length){ const x=ACQ.shift(); ACB++;
     else { x.price=null; x.sale=null; x._acs=j.sale==='offers'?'offers':'not listed'; }
     const el=S.els&&S.els.get(x.id); if(el){ let t=el.querySelector('.tags'); if(!t){ t=document.createElement('div'); t.className='tags'; el.querySelector('.info').prepend(t); } t.innerHTML=tagsOf(x); const b=el.querySelector('a.buy'); if(b){ const w=document.createElement('div'); w.innerHTML=btnOf(x); b.replaceWith(w.firstChild); } }
     clearTimeout(ACT); ACT=setTimeout(()=>{ if(S.items&&S.items.length) render(false); },400); }).catch(()=>{}).finally(()=>{ ACB--; acNext(); }); } }
+/* aleatory.art (2026-11-26, from lab mkFill): title, real price, sold out / not listed from /api/price */
+const MKQ=[];let MKB=0,MKT=0;
+function mkFill(){ (S.items||[]).forEach(x=>{ if(x._mkq||!x.buy||!/(^|\.)aleatory\.art$/i.test(x.buy.p.host||'')) return; x._mkq=1; MKQ.push(x); }); mkNext(); }
+function mkNext(){ while(MKB<4&&MKQ.length){ const x=MKQ.shift(); MKB++;
+  fetch(SSB+'/api/price?u='+encodeURIComponent(x.buy.url)).then(r=>r.json()).then(j=>{ if(!j||!j.ok) return; const c=j.cur||'';
+    if(j.t) x._nt=j.t;
+    if(j.kind==='buy'||j.kind==='auction'){ x.price={val:j.val,cur:c,usd:j.val*(USD[c]||1),label:c==='USD'?'$'+j.val:j.val+' '+c}; x.sale=j.kind==='auction'?'auction':'buy now'; x._st=''; x._fs=true; }
+    else { x.price=null; x.sale=null; x._st=j.st||'not listed'; x._fs=false; }
+    if(/1\/1/.test(j.sale||'')) x.ed='1/1'; else { const e=(j.sale||'').match(/edition of (\d+)/); if(e) x.ed='ed. '+e[1]; }
+    const el=S.els&&S.els.get(x.id); if(el){ const inf=el.querySelector('.info'); let t=el.querySelector('.tags'); if(!t){ t=document.createElement('div'); t.className='tags'; inf.prepend(t); } t.innerHTML=tagsOf(x);
+      if(x._nt){ let n=el.querySelector('.txt.nt'); if(!n){ n=document.createElement('p'); n.className='txt nt'; t.after(n); } n.textContent=x._nt; }
+      const b=el.querySelector('a.buy'); if(b){ const w=document.createElement('div'); w.innerHTML=btnOf(x); b.replaceWith(w.firstChild); } }
+    clearTimeout(MKT); MKT=setTimeout(()=>{ if(S.items&&S.items.length) render(false); },400); }).catch(()=>{}).finally(()=>{ MKB--; mkNext(); }); } }
 function render(animate){
-  acFill(); okFill(); if(MODES[S.mode]&&MODES[S.mode].k==='fs') fsFill();
+  acFill(); mkFill(); okFill(); if(MODES[S.mode]&&MODES[S.mode].k==='fs') fsFill();
   if(!(window.TIDE&&TIDE.hold&&TIDE.hold())) document.body.classList.add('loaded'); bgPlay(false);
   if(!S._k){ S._k=1; requestAnimationFrame(()=>{ setMode(S.mode,true); placeSort(); }); } else { if(!$('#track').classList.contains('drag')) setMode(S.mode,true); if(!$('#strack').classList.contains('drag')) placeSort(); }
   S.view = sorted();

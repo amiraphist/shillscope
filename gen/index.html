@@ -202,8 +202,8 @@ $('#cimg').onclick=()=>{ const b=$('#cimg'); if(!IMG) return; hit('gi'); clearTi
    .finally(()=>{ clearTimeout(b._t); b._t=setTimeout(()=>b.textContent='copy image',2000); }); };
 F.forEach(k=>$('#'+k).addEventListener('input',compose));
 $('#f').onsubmit=async e=>{ e.preventDefault(); const url=$('#u').value.trim(); $('#err').textContent='';
-  let okSite=false; try{ const h=new URL(url); okSite=/^https?:$/.test(h.protocol)&&/^(?:www\.)?(?:superrare\.com|transient\.xyz|objkt\.com|artcollect\.io|(?:[\w-]+\.)*manifold\.xyz)$/i.test(h.hostname); }catch(_){}
-  if(!okSite){ $('#err').textContent='only superrare, transient, objkt, manifold or artcollect links'; return; }
+  let okSite=false; try{ const h=new URL(url); okSite=/^https?:$/.test(h.protocol)&&/^(?:www\.)?(?:superrare\.com|transient\.xyz|objkt\.com|artcollect\.io|aleatory\.art|(?:[\w-]+\.)*manifold\.xyz)$/i.test(h.hostname); }catch(_){}
+  if(!okSite){ $('#err').textContent='only superrare, transient, objkt, manifold, artcollect or aleatory links'; return; }
   $('#go').disabled=true; $('#go').textContent='…';
   try{ const j=await (await fetch(A+'/api/gen?url='+encodeURIComponent(url))).json();
     if(j.error) $('#err').textContent=j.error;
